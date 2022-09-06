@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
   <robot name="rbn100_chassis" xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- 包含gazebo描述文件，在urdf文件开头也可以 -->
-  <xacro:include filename="gazebo_common_property.xacro"/>
-  <xacro:include filename="gazebo_plugin.xacro"/>
+  <xacro:include filename="materials.xacro"/>
+  <xacro:include filename="rbn100.gazebo"/>
 
   <link name="base_footprint"/>
   <!-- base link -->

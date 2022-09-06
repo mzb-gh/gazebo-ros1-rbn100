@@ -4,9 +4,74 @@
 
   <xacro:property name="visualize" value="false" />
 
+  <gazebo reference="base_link">
+    <material>Gazebo/Gold</material>
+  </gazebo>
+
+  <xacro:macro name="wheel_prop" params="pos" >
+    <gazebo reference="${pos}_wheel">
+      <mu1>0.54</mu1>
+      <mu2>0.54</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>20</maxVel>
+      <material>Gazebo/Gray</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:wheel_prop pos="left" />
+  <xacro:wheel_prop pos="right" />
+
+  <!-- <xacro:macro name="vertical_prop" params="pos" >
+    <gazebo reference="vertical_${pos}">
+      <mu1>0.1</mu1>
+      <mu2>0.1</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>1.2</maxVel>
+      <material>Gazebo/Gold</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:vertical_prop pos="FL" />
+  <xacro:vertical_prop pos="FR" />
+  <xacro:vertical_prop pos="BL" />
+  <xacro:vertical_prop pos="BR" /> -->
+
+  <xacro:macro name="universal_prop" params="pos" >
+    <gazebo reference="universal_${pos}">
+      <mu1>0.1</mu1>
+      <mu2>0.1</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>20</maxVel>
+      <material>Gazebo/Gold</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:universal_prop pos="FL" />
+  <xacro:universal_prop pos="FR" />
+  <xacro:universal_prop pos="BL" />
+  <xacro:universal_prop pos="BR" />
+
+  <xacro:macro name="caster_prop" params="pos" >
+    <gazebo reference="${pos}_caster">
+      <mu1>0.1</mu1>
+      <mu2>0.1</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>20</maxVel>
+      <material>Gazebo/Gold</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:caster_prop pos="front" />
+  <xacro:caster_prop pos="back" />
+
   <!-- 插件程序中修改数据时间为硬件时间 -->
   <!-- lidar -->
   <gazebo reference="lidar">
+    <material>Gazebo/FlatBlack</material>
     <sensor type="ray" name="lidar_sensor">
       <pose>0 0 0 0 0 0</pose>
       <visualize>${visualize}</visualize>
@@ -40,6 +105,7 @@
 
   <!-- tof -->
   <gazebo reference="tof">
+    <material>Gazebo/FlatBlack</material>
     <sensor type="depth" name="tof">
       <update_rate>10.0</update_rate>
       <visualize>${visualize}</visualize>
@@ -89,6 +155,7 @@
 
   <!-- camera -->
   <gazebo reference="camera">
+    <material>Gazebo/FlatBlack</material>
     <sensor type="camera" name="camera">
       <update_rate>25</update_rate>
       <visualize>${visualize}</visualize>
@@ -130,6 +197,7 @@
   <!-- sonar -->
   <xacro:macro name="sonar_plugin" params="pos">
     <gazebo reference="sonar_${pos}">
+      <material>Gazebo/FlatBlack</material>
       <sensor type="ray" name="sonar_${pos}">
         <pose>0 0 0 0 0 0</pose>
         <visualize>${visualize}</visualize>
@@ -175,6 +243,7 @@
   <!-- cliff -->
   <xacro:macro name="cliff_plugin" params="pos">
     <gazebo reference="cliff_${pos}">
+      <material>Gazebo/FlatBlack</material>
       <sensor type="ray" name="cliff_${pos}">
         <always_on>true</always_on>
         <update_rate>50</update_rate>
@@ -219,6 +288,7 @@
 
   <!-- bumper -->
   <gazebo reference="bumper">
+    <material>Gazebo/FlatBlack</material>
     <selfCollide>false</selfCollide>
     <sensor name="bumper" type="contact">
       <update_rate>50.0</update_rate>

@@ -1,8 +1,0 @@
-<robot name="mycar" xmlns:xacro="http://wiki.ros.org/xacro">
-</robot>
-
-<xacro:property name="prop" value="0.0" />
-
-<xacro:macro name="func_name" params="arg1 arg2" >
-</xacro:macro>
-<xacro:wheel_func wheel_name="func_name" arg1="1" />
