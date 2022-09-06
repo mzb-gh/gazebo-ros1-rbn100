@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+
+<robot name="rbn100_chassis" xmlns:xacro="http://ros.org/wiki/xacro">
+  
+  <gazebo reference="base_link">
+    <material>Gazebo/Gold</material>
+  </gazebo>
+
+  <xacro:macro name="wheel_prop" params="pos" >
+    <gazebo reference="${pos}_wheel">
+      <mu1>0.54</mu1>
+      <mu2>0.54</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>20</maxVel>
+      <material>Gazebo/Gray</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:wheel_prop pos="left" />
+  <xacro:wheel_prop pos="right" />
+
+  <!-- <xacro:macro name="vertical_prop" params="pos" >
+    <gazebo reference="vertical_${pos}">
+      <mu1>0.1</mu1>
+      <mu2>0.1</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>1.2</maxVel>
+      <material>Gazebo/Gold</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:vertical_prop pos="FL" />
+  <xacro:vertical_prop pos="FR" />
+  <xacro:vertical_prop pos="BL" />
+  <xacro:vertical_prop pos="BR" /> -->
+
+  <xacro:macro name="universal_prop" params="pos" >
+    <gazebo reference="universal_${pos}">
+      <mu1>0.1</mu1>
+      <mu2>0.1</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>20</maxVel>
+      <material>Gazebo/Gold</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:universal_prop pos="FL" />
+  <xacro:universal_prop pos="FR" />
+  <xacro:universal_prop pos="BL" />
+  <xacro:universal_prop pos="BR" />
+
+  <xacro:macro name="caster_prop" params="pos" >
+    <gazebo reference="${pos}_caster">
+      <mu1>0.1</mu1>
+      <mu2>0.1</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>20</maxVel>
+      <material>Gazebo/Gold</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:caster_prop pos="front" />
+  <xacro:caster_prop pos="back" />
+
+  <xacro:macro name="sonar_prop" params="pos" >
+    <gazebo reference="sonar_${pos}">
+      <material>Gazebo/FlatBlack</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:sonar_prop pos="front" />
+  <xacro:sonar_prop pos="back" />
+  <xacro:sonar_prop pos="FL" />
+  <xacro:sonar_prop pos="FR" />
+
+  <gazebo reference="tof">
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+  <gazebo reference="camera">
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+  <gazebo reference="lidar">
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+
+  <xacro:macro name="cliff_prop" params="pos" >
+    <gazebo reference="cliff_${pos}">
+      <material>Gazebo/FlatBlack</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:cliff_prop pos="FL" />
+  <xacro:cliff_prop pos="FR" />
+  <xacro:cliff_prop pos="BL" />
+  <xacro:cliff_prop pos="BR" />
+
+  <gazebo reference="bumper">
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+</robot>

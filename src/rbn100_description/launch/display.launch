@@ -1,0 +1,16 @@
+<launch>
+  <!-- 修改包名后需要重新加载模型描述参数（注释掉再重新放开） -->
+  <!-- <param name="robot_description" textfile="$(find rbn100_description)/urdf/description.urdf" /> -->
+  <param name="robot_description" command="$(find xacro)/xacro $(find rbn100_description)/urdf/model_urdf.xacro" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbn100_description)/config/rviz.rviz" />
+  <!-- <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" /> -->
+  <!-- <node pkg="arbotix_python" type="arbotix_driver" name="arbotix" output="screen"> -->
+      <!-- 在name下设置参数 -->
+      <!-- 加载控制器参数 -->
+      <!-- <rosparam file="$(find rbn100_description)/config/arbotix_control.yaml" command="load" /> -->
+      <!-- 使用仿真 -->
+      <!-- <param name="sim" value="true" /> -->
+  <!-- </node> -->
+</launch>
