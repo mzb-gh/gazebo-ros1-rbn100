@@ -110,7 +110,7 @@
       <update_rate>10.0</update_rate>
       <visualize>${visualize}</visualize>
       <camera name="head_tof">
-        <horizontal_fov>1.047</horizontal_fov> <!-- 60 degree -->
+        <horizontal_fov>1.047198</horizontal_fov> <!-- 60 degree -->
         <image>
             <width>224</width>
             <height>172</height>
@@ -134,7 +134,7 @@
           <depthImageInfoTopicName>depth/camera_info</depthImageInfoTopicName>
           <pointCloudTopicName>depth/points</pointCloudTopicName>
           <frameName>kinect</frameName>
-          <!-- 点云工作范围 -->
+          <!-- 点云工作范围，在父标签基础上的附加限制 -->
           <pointCloudCutoff>0.2</pointCloudCutoff>
           <pointCloudCutoffMax>5</pointCloudCutoffMax>
           <!-- 畸变系数 -->
@@ -329,7 +329,7 @@
     </sensor>
   </gazebo> -->
 
-  <!-- imu -->
+  <!-- imu，kuboki -->
   <gazebo reference="imu">
     <sensor type="imu" name="imu">
       <update_rate>500</update_rate>
@@ -384,7 +384,6 @@
         <robotNamespace>/</robotNamespace>
         <publishTf>1</publishTf>
         <publishWheelJointState>true</publishWheelJointState>
-        <alwaysOn>true</alwaysOn>
         <updateRate>1000</updateRate>
         <legacyMode>true</legacyMode>
         <leftJoint>left_wheel_joint</leftJoint>
@@ -392,17 +391,19 @@
         <wheelSeparation>0.322</wheelSeparation>
         <wheelDiameter>0.0169</wheelDiameter>
         <broadcastTF>1</broadcastTF>
-        <wheelTorque>1</wheelTorque>
+        <wheelTorque>5</wheelTorque>
         <wheelAcceleration>0.8</wheelAcceleration>
         <commandTopic>cmd_vel</commandTopic>
+        <odometrySource>0</odometrySource>
         <odometryFrame>odom</odometryFrame> 
         <odometryTopic>odom</odometryTopic>
-        <publishOdomTF>true</publishOdomTF>
+        <publishOdom>true</publishOdom>
         <robotBaseFrame>base_footprint</robotBaseFrame>
     </plugin>
   </gazebo> -->
 
   <!-- rbn100 control -->
+  <!-- gazebo标签没有reference就指整个模型 -->
   <gazebo>
     <plugin name="rbn100_controller" filename="libgazebo_ros_rbn100.so">
       <rosDebugLevel>Info</rosDebugLevel>
@@ -412,7 +413,7 @@
       <right_wheel_joint_name>right_wheel_joint</right_wheel_joint_name>
       <wheel_separation>0.322</wheel_separation>
       <wheel_diameter>0.169</wheel_diameter>
-      <torque>1.0</torque>
+      <torque>5</torque>
       <!-- 按秒计算 -->
       <velocity_command_timeout>1</velocity_command_timeout> 
       <cliff_sensor_FL_name>cliff_FL</cliff_sensor_FL_name>
