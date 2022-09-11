@@ -252,6 +252,8 @@ private:
   ros::Subscriber cliff_auto_stop_motor_sub_;
   // ROS publisher for motor power state events
   ros::Publisher motor_power_state_pub_;
+
+  int console_log_rate;
 };
 
 } // namespace gazebo

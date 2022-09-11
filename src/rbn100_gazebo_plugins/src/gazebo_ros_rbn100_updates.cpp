@@ -22,6 +22,7 @@ void GazeboRosRbn100::propagateVelocityCommands()
   }
   joints_[LEFT]->SetVelocity(0, wheel_speed_cmd_[LEFT] / (wheel_diam_ / 2.0));
   joints_[RIGHT]->SetVelocity(0, wheel_speed_cmd_[RIGHT] / (wheel_diam_ / 2.0));
+  ROS_INFO_STREAM_THROTTLE(console_log_rate, "update velocity");
 }
 
 void GazeboRosRbn100::updateJointState()
@@ -46,6 +47,7 @@ void GazeboRosRbn100::updateJointState()
 
 
   joint_state_pub_.publish(joint_state_);
+  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish joint state");
 }
 
 /*
@@ -119,10 +121,10 @@ void GazeboRosRbn100::updateOdometry(common::Time& step_time)
 
   odom_.pose.covariance[0]  = 0.1;
   odom_.pose.covariance[7]  = 0.1;
-  odom_.pose.covariance[35] = 0.05;
   odom_.pose.covariance[14] = 1e6;
   odom_.pose.covariance[21] = 1e6;
   odom_.pose.covariance[28] = 1e6;
+  odom_.pose.covariance[35] = 0.05;
 
   odom_.twist.twist.linear.x = odom_vel_[0];
   odom_.twist.twist.linear.y = 0;
@@ -142,6 +144,7 @@ void GazeboRosRbn100::updateOdometry(common::Time& step_time)
     odom_tf_.transform.rotation = odom_.pose.pose.orientation;
     tf_broadcaster_.sendTransform(odom_tf_);
   }
+  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish odom");
 }
 
 /*
@@ -198,7 +201,8 @@ void GazeboRosRbn100::updateIMU()
   #endif
 
 
-  imu_pub_.publish(imu_msg_); // publish imu message
+  imu_pub_.publish(imu_msg_);
+  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish imu");
 }
 
 /*
@@ -213,13 +217,13 @@ void GazeboRosRbn100::updateCliffSensor()
   // motors_enabled_ = true;
   if (cliff_sensor_FL_->Range(0) >= cliff_detection_threshold_)
   {
-    ROS_INFO_STREAM("cliff_FL detected");
+    ROS_INFO_STREAM_THROTTLE(console_log_rate, "cliff_FL detected");
     if(cliff_auto_stop_motor_flag){
       // set_motor_enable(false);
-      ROS_INFO_STREAM("enable cliff stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable cliff stop motor");
       motors_enabled_ = false;
     }else{
-      ROS_INFO_STREAM("disable cliff stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable cliff stop motor");
       motors_enabled_ = true;
     }
     cliff_detected_FL_ = true;
@@ -244,13 +248,13 @@ void GazeboRosRbn100::updateCliffSensor()
   // FR cliff sensor
   if (cliff_sensor_FR_->Range(0) >= cliff_detection_threshold_)
   {
-    ROS_INFO_STREAM("cliff_FR detected");
+    ROS_INFO_STREAM_THROTTLE(console_log_rate, "cliff_FR detected");
     if(cliff_auto_stop_motor_flag){
       // set_motor_enable(false);
-      ROS_INFO_STREAM("enable cliff stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable cliff stop motor");
       motors_enabled_ = false;
     }else{
-      ROS_INFO_STREAM("disable cliff stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable cliff stop motor");
       motors_enabled_ = true;
     }
     cliff_detected_FL_ = true;
@@ -272,13 +276,13 @@ void GazeboRosRbn100::updateCliffSensor()
   // BL cliff sensor
   if (cliff_sensor_BL_->Range(0) >= cliff_detection_threshold_)
   {
-    ROS_INFO_STREAM("cliff_BL detected");
+    ROS_INFO_STREAM_THROTTLE(console_log_rate, "cliff_BL detected");
     if(cliff_auto_stop_motor_flag){
       // set_motor_enable(false);
-      ROS_INFO_STREAM("enable cliff stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable cliff stop motor");
       motors_enabled_ = false;
     }else{
-      ROS_INFO_STREAM("disable cliff stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable cliff stop motor");
       motors_enabled_ = true;
     }
     cliff_detected_BL_ = true;
@@ -300,13 +304,13 @@ void GazeboRosRbn100::updateCliffSensor()
   // BR cliff sensor
   if (cliff_sensor_BR_->Range(0) >= cliff_detection_threshold_)
   {
-    ROS_INFO_STREAM("cliff_BR detected");
+    ROS_INFO_STREAM_THROTTLE(console_log_rate, "cliff_BR detected");
     if(cliff_auto_stop_motor_flag){
       // set_motor_enable(false);
-      ROS_INFO_STREAM("enable cliff stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable cliff stop motor");
       motors_enabled_ = false;
     }else{
-      ROS_INFO_STREAM("disable cliff stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable cliff stop motor");
       motors_enabled_ = true;
     }
     cliff_detected_BR_ = true;
@@ -325,6 +329,7 @@ void GazeboRosRbn100::updateCliffSensor()
     cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_BR_->Range(0)));
     cliff_event_pub_.publish(cliff_event_);
   }
+  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish cliff");
 }
 
 /*
@@ -347,13 +352,13 @@ void GazeboRosRbn100::updateBumper()
   // if (bumper_body_is_pressed_ && !bumper_body_was_pressed_)
   if (bumper_is_pressed_)
   {
-    ROS_INFO_STREAM("bumper triggered");
+    ROS_INFO_STREAM_THROTTLE(console_log_rate, "bumper triggered");
     if(bumper_auto_stop_motor_flag){
-      ROS_INFO_STREAM("enable bumper stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable bumper stop motor");
       // set_motor_enable(false);
       motors_enabled_ = false;
     }else{
-      ROS_INFO_STREAM("disable bumper stop motor");
+      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable bumper stop motor");
       motors_enabled_ = true;
     }
     bumper_was_pressed_ = true;
@@ -368,6 +373,7 @@ void GazeboRosRbn100::updateBumper()
     bumper_event_.bumper = rbn100_msgs::BumperEvent::body;
     bumper_event_pub_.publish(bumper_event_);
   }
+  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish bumper");
 }
 
 /* 

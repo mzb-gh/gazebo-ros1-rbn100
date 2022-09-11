@@ -65,7 +65,7 @@ KeyOpCore::KeyOpCore() : last_zero_vel_sent(true), // avoid zero-vel messages fr
                          wait_for_connection_(true),
                          cmd(new geometry_msgs::Twist()),
                          cmd_stamped(new geometry_msgs::TwistStamped()),
-                         linear_vel_step(0.1),
+                         linear_vel_step(0.05),
                          linear_vel_max(3.4),
                          angular_vel_step(0.02),
                          angular_vel_max(1.2),
@@ -192,7 +192,7 @@ bool KeyOpCore::init()
  */
 void KeyOpCore::spin()
 {
-  ros::Rate loop_rate(10);  //Hz
+  ros::Rate loop_rate(25);  //Hz
 
   while (!quit_requested && ros::ok())
   {

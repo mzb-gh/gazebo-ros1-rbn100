@@ -52,6 +52,8 @@
 #include <geometry_msgs/TwistStamped.h>  // for velocity commands
 #include <rbn100_msgs/KeyboardInput.h> // keycodes from remote teleops.
 
+#include <fstream> // log to file
+
 /*****************************************************************************
  ** Namespaces
  *****************************************************************************/
@@ -118,6 +120,9 @@ private:
   int key_file_descriptor;
   struct termios original_terminal_state;
   ecl::Thread thread;
+
+  /* log to file */
+  std::ofstream ofs;
 };
 
 } // namespace keyop_core

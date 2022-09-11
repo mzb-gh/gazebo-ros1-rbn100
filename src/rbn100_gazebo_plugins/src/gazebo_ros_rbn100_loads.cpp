@@ -332,6 +332,7 @@ void GazeboRosRbn100::cmdVelCB(const geometry_msgs::TwistConstPtr &msg)
     last_cmd_vel_time_ = world_->GetSimTime();
   #endif
 
+  // 线速度、角速度、轮间距和两轮速度的关系
   wheel_speed_cmd_[LEFT] = msg->linear.x - msg->angular.z * (wheel_sep_) / 2;
   wheel_speed_cmd_[RIGHT] = msg->linear.x + msg->angular.z * (wheel_sep_) / 2;
 }

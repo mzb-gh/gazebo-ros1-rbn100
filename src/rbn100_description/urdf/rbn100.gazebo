@@ -270,13 +270,13 @@
           </range>
         </ray>
         <!-- <plugin filename="libgazebo_ros_HTrange.so" name="cliff_controller">
-          <gaussianNoise>0.0005</gaussianNoise>
-          <alwaysOn>true</alwaysOn>
-          <updateRate>0</updateRate>
-          <topicName>cliff_${pos}</topicName>
+          <robotNamespace>/rbn100</robotNamespace>
           <frameName>cliff_${pos}</frameName>
+          <topicName>cliff_${pos}</topicName>
           <radiation>ultrasound</radiation>
-          <fov>0.5</fov>
+          <fov>0.0872</fov>
+          <gaussianNoise>0.0005</gaussianNoise>
+          <updateRate>0</updateRate>
         </plugin> -->
       </sensor>
     </gazebo>
@@ -354,30 +354,16 @@
     </sensor>
   </gazebo>
 
-  <!-- 
-    ros control
-   -->
-  <!-- <transmission name="left_wheel_joint_trans">
-      <type>transmission_interface/SimpleTransmission</type>
-      <joint name="left_wheel_joint">
-          <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-      </joint>
-      <actuator name="left_wheel_joint_motor">
-          <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-          <mechanicalReduction>1</mechanicalReduction>
-      </actuator>
-  </transmission>
-  <transmission name="right_wheel_joint_trans">
-      <type>transmission_interface/SimpleTransmission</type>
-      <joint name="right_wheel_joint">
-          <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-      </joint>
-      <actuator name="right_wheel_joint_motor">
-          <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-          <mechanicalReduction>1</mechanicalReduction>
-      </actuator>
-  </transmission>
-  <gazebo>
+  <!-- ros control -->
+  <!-- <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/rbn100</robotNamespace>
+    </plugin>
+  </gazebo> -->
+
+  <!-- ros diff dive control-->
+  <!-- 里面的参数不给出的话程序中都设置了默认值 -->
+  <!-- <gazebo>
     <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
         <rosDebugLevel>Debug</rosDebugLevel>
         <publishWheelTF>true</publishWheelTF>
@@ -402,7 +388,7 @@
     </plugin>
   </gazebo> -->
 
-  <!-- rbn100 control -->
+  <!-- customize control -->
   <!-- gazebo标签没有reference就指整个模型 -->
   <gazebo>
     <plugin name="rbn100_controller" filename="libgazebo_ros_rbn100.so">

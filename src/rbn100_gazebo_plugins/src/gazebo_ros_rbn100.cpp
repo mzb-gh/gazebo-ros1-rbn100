@@ -33,6 +33,8 @@ GazeboRosRbn100::GazeboRosRbn100() : shutdown_requested_(false)
   motors_enabled_ = true;
   bumper_auto_stop_motor_flag = true;
   cliff_auto_stop_motor_flag = true;
+
+  console_log_rate = 1;
 }
 
 // deconstructor
