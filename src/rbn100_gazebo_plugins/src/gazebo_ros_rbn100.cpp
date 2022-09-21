@@ -31,10 +31,12 @@ GazeboRosRbn100::GazeboRosRbn100() : shutdown_requested_(false)
   cliff_detected_BR_ = false;
   bumper_was_pressed_ = false;
   motors_enabled_ = true;
-  bumper_auto_stop_motor_flag = true;
-  cliff_auto_stop_motor_flag = true;
+  bumper_auto_stop_motor_flag = false;
+  cliff_auto_stop_motor_flag = false;
 
   console_log_rate = 1;
+  rate_step_ = 0;
+  imu_step_ = 0;
 }
 
 // deconstructor
@@ -77,6 +79,15 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
   node_name_ = model_name;
   world_ = parent->GetWorld();
 
+  if (!sdf_->HasElement("update_rate"))
+  {
+    ROS_DEBUG_NAMED("sensor", "sensor plugin missing <update_rate>, defaults to 0.0"
+             " (as fast as possible)");
+    update_rate_ = 0.0;
+  }
+  else
+    update_rate_ = sdf_->GetElement("update_rate")->Get<double>();
+
   // prepareMotorPower();
   preparePublishTf();
 
@@ -84,9 +95,8 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
     return;
   if(prepareWheelAndTorque() == false)
     return;
-
-  prepareOdom();
-
+  if(prepareOdom() == false)
+    return;
   if(prepareVelocityCommand() == false)
     return;
   if(prepareCliffSensor() == false)
@@ -107,7 +117,8 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
 
   ROS_INFO_STREAM("GazeboRosRbn100 plugin ready to go! [" << node_name_ << "]");
   // Listen to the update event. This event is broadcast every simulation iteration.
-  update_connection_ = event::Events::ConnectWorldUpdateEnd(boost::bind(&GazeboRosRbn100::OnUpdate, this));
+  update_connection_ = event::Events::ConnectWorldUpdateEnd(
+      boost::bind(&GazeboRosRbn100::OnUpdate, this));
 }
 
 // 1ms，在update中发布话题调用回调函数并更新底盘状态
@@ -116,116 +127,30 @@ void GazeboRosRbn100::OnUpdate()
   // 查看订阅队列消息，调用回调函数设置标志等
   ros::spinOnce();
 
-  /*
-   * Update current time and time step
-   */
   common::Time time_now;
-  #if GAZEBO_MAJOR_VERSION >= 9
-    // time_now = world_->SimTime();
-    time_now.Set(ros::Time::now().sec, ros::Time::now().nsec);
-  #else
-    time_now = world_->GetSimTime();
-  #endif
+  time_now.Set(ros::Time::now().sec, ros::Time::now().nsec);
 
-  // if (time_now < prev_update_time_) {
-  //   ROS_WARN_NAMED("gazebo_ros_rbn100", "Negative update time difference detected.");
-  //   prev_update_time_ = time_now;
-  // }
+  /* 
+    rate control
+   */
   common::Time step_time = time_now - prev_update_time_;
-
-  // update vel
-  propagateVelocityCommands();
-
-  // publish rate control
-  // if (this->update_rate_ > 0 && step_time.Double() < (1.0 / this->update_rate_)) {
-  //   return;
-  // }
-
-  prev_update_time_ = time_now;
-
-  updateJointState();
-  updateOdometry(step_time);
-  updateIMU();
-  updateCliffSensor();
+  imu_step_ += step_time;
+  rate_step_ += step_time;
+  
+  if(rate_step_.Double() >= (1.0 / update_rate_)){
+    updateOdometry(rate_step_);
+    updateJointState();
+    propagateVelocityCommands();
+    rate_step_ = 0;
+  }
+  if(imu_step_.Double() >= (1.0 / imu_rate_)){
+    updateIMU();
+    imu_step_ = 0;
+  }
   updateBumper();
-  // pubSensorState();
+  updateCliffSensor();
+  prev_update_time_ = time_now;
 }
-
-/* void GazeboRosRbn100::spin()
-{
-  ros::Rate r(10);
-  while(ros::ok() && !shutdown_requested_)
-  {
-    r.sleep();
-    ROS_INFO_STREAM("------------------------");
-    ROS_INFO_STREAM("GazeboRosRbn100:spin");
-
-  }
-} */
-
-/* cliff and bumper motor control */
-/* void GazeboRosRbn100::set_motor_enable(uint8_t _state)
-{
-  ROS_INFO_STREAM("Motors enable [" << (int)_state << "]");
-  motors_enabled_ = _state;
-  motorPowerPub(_state);
-} */
-
-/* void GazeboRosRbn100::bumperAutoStopMotorCB(const std_msgs::BoolPtr &msg)
-{
-   bumper_auto_stop_flag = msg->data;
-   ROS_INFO_STREAM("forbidden flag for bumper press event to stop motor power: "<<bumper_auto_stop_flag);
-}
-
-void GazeboRosRbn100::cliffAutoStopMotorCB(const std_msgs::BoolPtr &msg)
-{
-   cliff_auto_stop_flag = msg->data;
-   ROS_INFO_STREAM("forbidden flag for cliff event to stop motor power: "<<cliff_auto_stop_flag);
-} */
-
-/* void GazeboRosRbn100::motorPowerPub(std::uint8_t _state)
-{
-  rbn100_msgs::MotorPower msg;
-  msg.state = _state;
-  motor_power_state_pub_.publish(msg);
-}
- */
-/* void GazeboRosRbn100::motorPowerCB(const rbn100_msgs::MotorPowerPtr &msg)
-{
-  if ((msg->state == rbn100_msgs::MotorPower::ON) && (!motors_enabled_))
-  {
-    // motors_enabled_ = true;
-    set_motor_enable(true);
-    ROS_INFO_STREAM("Motors fired up. [" << node_name_ << "]");
-  }
-  else if ((msg->state == rbn100_msgs::MotorPower::OFF) && (motors_enabled_))
-  {
-    // motors_enabled_ = false;
-    set_motor_enable(false);
-    ROS_INFO_STREAM("Motors taking a rest. [" << node_name_ << "]");
-  }
-} */
-
-/* void GazeboRosRbn100::cmdVelCB(const geometry_msgs::TwistConstPtr &msg)
-{
-  #if GAZEBO_MAJOR_VERSION >= 9
-    // last_cmd_vel_time_ = world_->SimTime();
-    last_cmd_vel_time_.Set(ros::Time::now().sec, ros::Time::now().nsec);
-  #else
-    last_cmd_vel_time_ = world_->GetSimTime();
-  #endif
-
-  wheel_speed_cmd_[LEFT] = msg->linear.x - msg->angular.z * (wheel_sep_) / 2;
-  wheel_speed_cmd_[RIGHT] = msg->linear.x + msg->angular.z * (wheel_sep_) / 2;
-} */
-
-/* void GazeboRosRbn100::resetOdomCB(const std_msgs::EmptyConstPtr &msg)
-{
-  ROS_INFO("Reset Odom!");
-  odom_pose_[0] = 0.0;
-  odom_pose_[1] = 0.0;
-  odom_pose_[2] = 0.0;
-} */
 
 // Register this plugin with the simulator
 GZ_REGISTER_MODEL_PLUGIN(GazeboRosRbn100);

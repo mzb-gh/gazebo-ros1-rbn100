@@ -34,7 +34,6 @@
 #include <rbn100_msgs/MotorPower.h>
 #include <rbn100_msgs/CliffEvent.h>
 #include <rbn100_msgs/BumperEvent.h>
-#include <rbn100_msgs/SensorState.h>
 
 namespace gazebo
 {
@@ -82,7 +81,7 @@ private:
     read params from urdf
    */
   // init odom pose
-  void prepareOdom();
+  bool prepareOdom();
   // init motor flag
   // void prepareMotorPower();
   // get publish TF info
@@ -201,6 +200,7 @@ private:
   ros::Publisher cliff_event_pub_;
   /// rbn100 ROS message for cliff event
   rbn100_msgs::CliffEvent cliff_event_;
+  // trigger event control
   /// Cliff flag for the FL sensor
   bool cliff_detected_FL_;
   /// Cliff flag for the FR sensor
@@ -254,6 +254,16 @@ private:
   ros::Publisher motor_power_state_pub_;
 
   int console_log_rate;
+  
+  std::string odom_name_;
+  std::string bumper_name_;
+  std::string imu_name_;
+
+  double update_rate_;
+  double imu_rate_;
+
+  common::Time rate_step_;
+  common::Time imu_step_;
 };
 
 } // namespace gazebo

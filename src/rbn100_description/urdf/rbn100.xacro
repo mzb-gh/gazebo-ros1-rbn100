@@ -6,6 +6,7 @@
 
   <link name="base_footprint"/>
 
+  <!-- 保持sw的参数不变，机体稳定性也会挺好，增加质量会转不动 -->
   <!-- base link -->
   <link
     name="base_link">
@@ -13,16 +14,15 @@
       <origin
         xyz="0 0 0"
         rpy="0 0 0" />
-      <!-- 不规则车体在仿真中滑动，增大质量和比例放大惯性矩阵 -->
       <mass
-        value="29.657" />
+        value="2.9657" />
       <inertia
-        ixx="0.8368808"
-        ixy="-0.0029554"
-        ixz="0.027089"
-        iyy="0.9677856"
-        iyz="0.0015188"
-        izz="1.3033017" />
+        ixx="0.08368808"
+        ixy="-0.00029554"
+        ixz="0.0027089"
+        iyy="0.09677856"
+        iyz="0.00015188"
+        izz="0.13033017" />
     </inertial>
     <visual>
       <origin
@@ -45,7 +45,6 @@
       <geometry>
         <mesh
           filename="package://rbn100_description/meshes/base_link.dae" />
-        <!-- <box size="0.457 0.4 0.267" /> -->
       </geometry>
     </collision>
   </link>
@@ -80,7 +79,7 @@
           ixy="3.8126E-10"
           ixz="1.7547E-09"
           iyy="0.0033687"
-          iyz="-3.6374E-07"
+          iyz="-3.6374E-7"
           izz="0.0019547" />
       </inertial>
       <visual>

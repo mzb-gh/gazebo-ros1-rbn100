@@ -1,7 +1,3 @@
-/* 
-  插件类部分成员函数实现-2
- */
-
 #include "rbn100_gazebo_plugins/gazebo_ros_rbn100.h"
 
 namespace gazebo 
@@ -22,7 +18,6 @@ void GazeboRosRbn100::propagateVelocityCommands()
   }
   joints_[LEFT]->SetVelocity(0, wheel_speed_cmd_[LEFT] / (wheel_diam_ / 2.0));
   joints_[RIGHT]->SetVelocity(0, wheel_speed_cmd_[RIGHT] / (wheel_diam_ / 2.0));
-  ROS_INFO_STREAM_THROTTLE(console_log_rate, "update velocity");
 }
 
 void GazeboRosRbn100::updateJointState()
@@ -45,9 +40,7 @@ void GazeboRosRbn100::updateJointState()
   joint_state_.velocity[LEFT] = joints_[LEFT]->GetVelocity(0);
   joint_state_.velocity[RIGHT] = joints_[RIGHT]->GetVelocity(0);
 
-
   joint_state_pub_.publish(joint_state_);
-  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish joint state");
 }
 
 /*
@@ -144,7 +137,6 @@ void GazeboRosRbn100::updateOdometry(common::Time& step_time)
     odom_tf_.transform.rotation = odom_.pose.pose.orientation;
     tf_broadcaster_.sendTransform(odom_tf_);
   }
-  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish odom");
 }
 
 /*
@@ -167,7 +159,6 @@ void GazeboRosRbn100::updateIMU()
     imu_msg_.orientation.z = quat.z;
     imu_msg_.orientation.w = quat.w;
   #endif
-
 
   imu_msg_.orientation_covariance[0] = 1e6;
   imu_msg_.orientation_covariance[4] = 1e6;
@@ -200,9 +191,7 @@ void GazeboRosRbn100::updateIMU()
     imu_msg_.linear_acceleration.z = lin_acc.z;
   #endif
 
-
   imu_pub_.publish(imu_msg_);
-  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish imu");
 }
 
 /*
@@ -212,124 +201,110 @@ void GazeboRosRbn100::updateIMU()
 void GazeboRosRbn100::updateCliffSensor()
 {
   // FL cliff sensor
-  // if ((cliff_detected_FL_ == false) &&
-  //     (cliff_sensor_FL_->Range(0) >= cliff_detection_threshold_))
-  // motors_enabled_ = true;
-  if (cliff_sensor_FL_->Range(0) >= cliff_detection_threshold_)
+  if ((cliff_detected_FL_ == false) &&
+      (cliff_sensor_FL_->Range(0) >= cliff_detection_threshold_))
   {
-    ROS_INFO_STREAM_THROTTLE(console_log_rate, "cliff_FL detected");
+    ROS_INFO_STREAM("cliff_FL detected");
     if(cliff_auto_stop_motor_flag){
       // set_motor_enable(false);
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable cliff stop motor");
+      ROS_INFO_STREAM("enable cliff stop motor");
       motors_enabled_ = false;
-    }else{
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable cliff stop motor");
-      motors_enabled_ = true;
     }
     cliff_detected_FL_ = true;
     cliff_event_.which = rbn100_msgs::CliffEvent::FL;
     cliff_event_.state = rbn100_msgs::CliffEvent::CLIFF;
     // convert distance back to an AD reading
-    // cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_FL_->Range(0)));
     cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_FL_->Range(0)));
     cliff_event_pub_.publish(cliff_event_);
   }
-  // else if ((cliff_detected_FL_ == true) &&
-  //           (cliff_sensor_FL_->Range(0) < cliff_detection_threshold_))
-  else if (cliff_sensor_FL_->Range(0) < cliff_detection_threshold_)
+  else if ((cliff_detected_FL_ == true) && 
+           (cliff_sensor_FL_->Range(0) < cliff_detection_threshold_))
   {
+    ROS_INFO_STREAM("cliff_FL normal");
     cliff_detected_FL_ = false;
     cliff_event_.which = rbn100_msgs::CliffEvent::FL;
     cliff_event_.state = rbn100_msgs::CliffEvent::FLOOR;
-    // convert distance back to an AD reading
     cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_FL_->Range(0)));
     cliff_event_pub_.publish(cliff_event_);
   }
   // FR cliff sensor
-  if (cliff_sensor_FR_->Range(0) >= cliff_detection_threshold_)
+  if ((cliff_detected_FR_ == false) &&
+      (cliff_sensor_FR_->Range(0) >= cliff_detection_threshold_))
   {
-    ROS_INFO_STREAM_THROTTLE(console_log_rate, "cliff_FR detected");
+    ROS_INFO_STREAM("cliff_FR detected");
     if(cliff_auto_stop_motor_flag){
       // set_motor_enable(false);
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable cliff stop motor");
+      ROS_INFO_STREAM("enable cliff stop motor");
       motors_enabled_ = false;
-    }else{
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable cliff stop motor");
-      motors_enabled_ = true;
     }
-    cliff_detected_FL_ = true;
+    cliff_detected_FR_ = true;
     cliff_event_.which = rbn100_msgs::CliffEvent::FR;
     cliff_event_.state = rbn100_msgs::CliffEvent::CLIFF;
-    // convert distance back to an AD reading
     cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_FR_->Range(0)));
     cliff_event_pub_.publish(cliff_event_);
   }
-  else if (cliff_sensor_FR_->Range(0) < cliff_detection_threshold_)
+  else if ((cliff_detected_FR_ == true) &&
+          (cliff_sensor_FR_->Range(0) < cliff_detection_threshold_))
   {
-    cliff_detected_FL_ = false;
+    ROS_INFO_STREAM("cliff_FR normal");
+    cliff_detected_FR_ = false;
     cliff_event_.which = rbn100_msgs::CliffEvent::FR;
     cliff_event_.state = rbn100_msgs::CliffEvent::FLOOR;
-    // convert distance back to an AD reading
     cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_FR_->Range(0)));
     cliff_event_pub_.publish(cliff_event_);
   }
   // BL cliff sensor
-  if (cliff_sensor_BL_->Range(0) >= cliff_detection_threshold_)
+  if ((cliff_detected_BL_ == false) &&
+      (cliff_sensor_BL_->Range(0) >= cliff_detection_threshold_))
   {
-    ROS_INFO_STREAM_THROTTLE(console_log_rate, "cliff_BL detected");
+    ROS_INFO_STREAM("cliff_BL detected");
     if(cliff_auto_stop_motor_flag){
       // set_motor_enable(false);
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable cliff stop motor");
+      ROS_INFO_STREAM("enable cliff stop motor");
       motors_enabled_ = false;
-    }else{
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable cliff stop motor");
-      motors_enabled_ = true;
     }
     cliff_detected_BL_ = true;
     cliff_event_.which = rbn100_msgs::CliffEvent::BL;
     cliff_event_.state = rbn100_msgs::CliffEvent::CLIFF;
-    // convert distance back to an AD reading
     cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_BL_->Range(0)));
     cliff_event_pub_.publish(cliff_event_);
   }
-  else if (cliff_sensor_BL_->Range(0) < cliff_detection_threshold_)
+  else if ((cliff_detected_BL_ == true) &&
+          (cliff_sensor_BL_->Range(0) < cliff_detection_threshold_))
   {
+    ROS_INFO_STREAM("cliff_BL normal");
     cliff_detected_BL_ = false;
     cliff_event_.which = rbn100_msgs::CliffEvent::BL;
     cliff_event_.state = rbn100_msgs::CliffEvent::FLOOR;
-    // convert distance back to an AD reading
     cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_BL_->Range(0)));
     cliff_event_pub_.publish(cliff_event_);
   }
   // BR cliff sensor
-  if (cliff_sensor_BR_->Range(0) >= cliff_detection_threshold_)
+  if ((cliff_detected_BR_ == false) &&
+      (cliff_sensor_BR_->Range(0) >= cliff_detection_threshold_))
   {
-    ROS_INFO_STREAM_THROTTLE(console_log_rate, "cliff_BR detected");
+    ROS_INFO_STREAM("cliff_BR detected");
     if(cliff_auto_stop_motor_flag){
       // set_motor_enable(false);
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable cliff stop motor");
+      ROS_INFO_STREAM("enable cliff stop motor");
       motors_enabled_ = false;
-    }else{
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable cliff stop motor");
-      motors_enabled_ = true;
     }
     cliff_detected_BR_ = true;
     cliff_event_.which = rbn100_msgs::CliffEvent::BR;
     cliff_event_.state = rbn100_msgs::CliffEvent::CLIFF;
-    // convert distance back to an AD reading
     cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_BR_->Range(0)));
     cliff_event_pub_.publish(cliff_event_);
   }
-  else if (cliff_sensor_BR_->Range(0) < cliff_detection_threshold_)
+  else if ((cliff_detected_BR_ == true) &&
+          (cliff_sensor_BR_->Range(0) < cliff_detection_threshold_))
   {
+    ROS_INFO_STREAM("cliff_BR normal");
     cliff_detected_BR_ = false;
     cliff_event_.which = rbn100_msgs::CliffEvent::BR;
     cliff_event_.state = rbn100_msgs::CliffEvent::FLOOR;
-    // convert distance back to an AD reading
     cliff_event_.bottom = (int)(76123.0f * atan2(0.995f, cliff_sensor_BR_->Range(0)));
     cliff_event_pub_.publish(cliff_event_);
   }
-  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish cliff");
 }
 
 /*
@@ -349,31 +324,27 @@ void GazeboRosRbn100::updateBumper()
   }
 
   // check for bumper state change
-  // if (bumper_body_is_pressed_ && !bumper_body_was_pressed_)
-  if (bumper_is_pressed_)
+  if (bumper_is_pressed_ && !bumper_was_pressed_)
   {
-    ROS_INFO_STREAM_THROTTLE(console_log_rate, "bumper triggered");
+    ROS_INFO_STREAM("bumper triggered");
     if(bumper_auto_stop_motor_flag){
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "enable bumper stop motor");
+      ROS_INFO_STREAM("enable bumper stop motor");
       // set_motor_enable(false);
       motors_enabled_ = false;
-    }else{
-      ROS_INFO_STREAM_THROTTLE(console_log_rate, "disable bumper stop motor");
-      motors_enabled_ = true;
     }
     bumper_was_pressed_ = true;
     bumper_event_.state = rbn100_msgs::BumperEvent::PRESSED;
     bumper_event_.bumper = rbn100_msgs::BumperEvent::body;
     bumper_event_pub_.publish(bumper_event_);
   }
-  else if (!bumper_is_pressed_)
+  else if (!bumper_is_pressed_ && bumper_was_pressed_)
   {
+    ROS_INFO_STREAM("bumper normal");
     bumper_was_pressed_ = false;
     bumper_event_.state = rbn100_msgs::BumperEvent::RELEASED;
     bumper_event_.bumper = rbn100_msgs::BumperEvent::body;
     bumper_event_pub_.publish(bumper_event_);
   }
-  ROS_INFO_STREAM_THROTTLE(console_log_rate, "publish bumper");
 }
 
 /* 
@@ -384,30 +355,5 @@ void GazeboRosRbn100::updateBumper()
   rbn100_msgs::MotorPower msg;
   msg.state = motors_enabled_;
   motor_power_state_pub_.publish(msg);
-} */
-
-/**
- * Core sensor state: msg concentrating all the low-level information reported by rbn100 base.
- * We provide only bumper and cliff sensors so we can integrate their readings on the costmaps
- * with the https://github.com/yujinrobot/rbn100/tree/melodic/rbn100_bumper2pc nodelet.
- */
-/* void GazeboRosRbn100::pubSensorState()
-{
-  rbn100_msgs::SensorState state;
-  state.header = joint_state_.header;
-
-  if (bumper_is_pressed_)
-    state.bumper |= rbn100_msgs::SensorState::BUMPER_body;
-
-  if (cliff_detected_FL_)
-    state.cliff |= rbn100_msgs::SensorState::CLIFF_FL;
-  if (cliff_detected_FR_)
-    state.cliff |= rbn100_msgs::SensorState::CLIFF_FR;
-  if (cliff_detected_BL_)
-    state.cliff |= rbn100_msgs::SensorState::CLIFF_BL;
-  if (cliff_detected_BR_)
-    state.cliff |= rbn100_msgs::SensorState::CLIFF_BR;
-
-  sensor_state_pub_.publish(state);
 } */
 }

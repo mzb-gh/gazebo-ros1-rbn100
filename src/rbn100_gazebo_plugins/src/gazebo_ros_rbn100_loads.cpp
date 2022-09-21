@@ -111,11 +111,24 @@ bool GazeboRosRbn100::prepareWheelAndTorque()
   return true;
 }
 
-void GazeboRosRbn100::prepareOdom()
+bool GazeboRosRbn100::prepareOdom()
 {
+  if (sdf_->HasElement("odom_name"))
+  {
+    odom_name_ = sdf_->GetElement("odom_name")->Get<std::string>();
+  }
+  else
+  {
+    ROS_ERROR_STREAM("prepareOdom: Couldn't find the odom_name parameter in the model description!"
+                     << " Did you specify it?" << " [" << node_name_ <<"]");
+    return false;
+  } 
+
   odom_pose_[0] = 0.0;
   odom_pose_[1] = 0.0;
   odom_pose_[2] = 0.0;
+
+  return true;
 }
 
 bool GazeboRosRbn100::prepareVelocityCommand()
@@ -231,10 +244,9 @@ bool GazeboRosRbn100::prepareCliffSensor()
 
 bool GazeboRosRbn100::prepareBumper()
 {
-  std::string bumper_name;
   if (sdf_->HasElement("bumper_name"))
   {
-    bumper_name = sdf_->GetElement("bumper_name")->Get<std::string>();
+    bumper_name_ = sdf_->GetElement("bumper_name")->Get<std::string>();
   }
   else
   {
@@ -242,8 +254,9 @@ bool GazeboRosRbn100::prepareBumper()
                      << " Did you specify it?" << " [" << node_name_ <<"]");
     return false;
   }
+
   bumper_ = std::dynamic_pointer_cast<sensors::ContactSensor>(
-            sensors::SensorManager::Instance()->GetSensor(bumper_name));
+            sensors::SensorManager::Instance()->GetSensor(bumper_name_));
   if (!bumper_)
   {
     ROS_ERROR_STREAM("Couldn't find the bumpers in the model! [" << node_name_ <<"]");
@@ -255,10 +268,9 @@ bool GazeboRosRbn100::prepareBumper()
 
 bool GazeboRosRbn100::prepareIMU()
 {
-  std::string imu_name;
   if (sdf_->HasElement("imu_name"))
   {
-    imu_name = sdf_->GetElement("imu_name")->Get<std::string>();
+    imu_name_ = sdf_->GetElement("imu_name")->Get<std::string>();
   }
   else
   {
@@ -266,9 +278,18 @@ bool GazeboRosRbn100::prepareIMU()
                      << " Did you specify it?" << " [" << node_name_ <<"]");
     return false;
   }
+  if (!sdf_->HasElement("imu_rate"))
+  {
+    ROS_DEBUG_NAMED("imu", "imu plugin missing <bumper_rate>, defaults to 0.0"
+             " (as fast as possible)");
+    imu_rate_ = 0.0;
+  }
+  else
+    imu_rate_ = sdf_->GetElement("imu_rate")->Get<double>();
+
   #if GAZEBO_MAJOR_VERSION >= 9
     imu_ = std::dynamic_pointer_cast<sensors::ImuSensor>(
-            sensors::get_sensor(world_->Name()+"::"+node_name_+"::base_footprint::"+imu_name));
+            sensors::get_sensor(world_->Name()+"::"+node_name_+"::base_footprint::"+imu_name_));
   #else
     imu_ = std::dynamic_pointer_cast<sensors::ImuSensor>(
             sensors::get_sensor(world_->GetName()+"::"+node_name_+"::base_footprint::"+imu_name));
@@ -286,18 +307,6 @@ bool GazeboRosRbn100::prepareIMU()
 /* 
   call backs
  */
-/* void GazeboRosRbn100::motorStatePub(std::uint8_t _state)
-{
-  rbn100_msgs::MotorPower msg;
-  msg.state = _state;
-  motor_power_state_pub_.publish(msg);
-} */
-/* void GazeboRosRbn100::set_motor_enable(uint8_t _state)
-{
-  ROS_INFO_STREAM("set_motor_enable: Motors enable [" << (int)_state << "]");
-  motors_enabled_ = _state;
-  motorPowerPub(_state);
-} */
 void GazeboRosRbn100::motorPowerCB(const rbn100_msgs::MotorPowerPtr &msg)
 {
   // if ((msg->state == rbn100_msgs::MotorPower::ON) && (!motors_enabled_))
@@ -363,7 +372,7 @@ void GazeboRosRbn100::setupRosApi(std::string& model_name)
   ROS_INFO("%s: Advertise joint_states[%s]!", gazebo_ros_->info(), joint_states_topic.c_str());
 
   // pub of odom
-  std::string odom_topic = "odom";
+  std::string odom_topic = odom_name_;
   odom_pub_ = gazebo_ros_->node()->advertise<nav_msgs::Odometry>(odom_topic, 1);
   ROS_INFO("%s: Advertise Odometry[%s]!", gazebo_ros_->info(), odom_topic.c_str());
 
@@ -373,19 +382,14 @@ void GazeboRosRbn100::setupRosApi(std::string& model_name)
   ROS_INFO("%s: Advertise Cliff[%s]!", gazebo_ros_->info(), cliff_topic.c_str());
 
   // pub of bumper
-  std::string bumper_topic = base_prefix + "/events/bumper";
+  std::string bumper_topic = base_prefix + "/events/" + bumper_name_;
   bumper_event_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::BumperEvent>(bumper_topic, 1);
   ROS_INFO("%s: Advertise Bumper[%s]!", gazebo_ros_->info(), bumper_topic.c_str());
 
   // pub of IMU
-  std::string imu_topic = base_prefix + "/sensors/imu_data";
+  std::string imu_topic = base_prefix + "/sensors/" + imu_name_;
   imu_pub_ = gazebo_ros_->node()->advertise<sensor_msgs::Imu>(imu_topic, 1);
   ROS_INFO("%s: Advertise IMU[%s]!", gazebo_ros_->info(), imu_topic.c_str());
-
-  // pub of sensor state
-  std::string core_topic = base_prefix + "/sensors/core";
-  sensor_state_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::SensorState>(core_topic, 1);
-  ROS_INFO("%s: Advertise Core[%s]!", gazebo_ros_->info(), core_topic.c_str());
 
   // pub of motor power state
   // std::string motor_power_state_topic = base_prefix + "/events/motor_power_state";

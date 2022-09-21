@@ -6,6 +6,10 @@
 
   <gazebo reference="base_link">
     <material>Gazebo/Gold</material>
+    <mu1>0.3</mu1>
+    <mu2>0.3</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
   </gazebo>
 
   <xacro:macro name="wheel_prop" params="pos" >
@@ -40,8 +44,8 @@
 
   <xacro:macro name="universal_prop" params="pos" >
     <gazebo reference="universal_${pos}">
-      <mu1>0.1</mu1>
-      <mu2>0.1</mu2>
+      <mu1>0.01</mu1>
+      <mu2>0.01</mu2>
       <kp>1000000.0</kp>
       <kd>100.0</kd>
       <minDepth>0.001</minDepth>
@@ -56,8 +60,8 @@
 
   <xacro:macro name="caster_prop" params="pos" >
     <gazebo reference="${pos}_caster">
-      <mu1>0.1</mu1>
-      <mu2>0.1</mu2>
+      <mu1>0.01</mu1>
+      <mu2>0.01</mu2>
       <kp>1000000.0</kp>
       <kd>100.0</kd>
       <minDepth>0.001</minDepth>
@@ -393,7 +397,6 @@
   <gazebo>
     <plugin name="rbn100_controller" filename="libgazebo_ros_rbn100.so">
       <rosDebugLevel>Info</rosDebugLevel>
-      <update_rate>1000</update_rate>
       <publish_tf>1</publish_tf>
       <left_wheel_joint_name>left_wheel_joint</left_wheel_joint_name>
       <right_wheel_joint_name>right_wheel_joint</right_wheel_joint_name>
@@ -407,8 +410,11 @@
       <cliff_sensor_BL_name>cliff_BL</cliff_sensor_BL_name>
       <cliff_sensor_BR_name>cliff_BR</cliff_sensor_BR_name>
       <cliff_detection_threshold>0.12</cliff_detection_threshold>
+      <odom_name>odom</odom_name>
       <bumper_name>bumper</bumper_name>
       <imu_name>imu</imu_name>
+      <update_rate>50</update_rate>
+      <imu_rate>500</imu_rate>
     </plugin>
   </gazebo>
 </robot>
