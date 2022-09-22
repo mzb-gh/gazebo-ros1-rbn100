@@ -1,7 +1,3 @@
-/* 
-  插件类部分成员函数实现-1
- */
-
 #include "rbn100_gazebo_plugins/gazebo_ros_rbn100.h"
 
 namespace gazebo
@@ -123,6 +119,11 @@ bool GazeboRosRbn100::prepareOdom()
                      << " Did you specify it?" << " [" << node_name_ <<"]");
     return false;
   } 
+
+  //  放大以获取更多信息提高精度
+  odom_.EncoderL = 0xfff * 1e5;
+  odom_.EncoderR = 0xfff * 1e5;
+  m_per_encoder_ = PI * wheel_diam_ / ENCODER_N;
 
   odom_pose_[0] = 0.0;
   odom_pose_[1] = 0.0;
@@ -327,6 +328,10 @@ void GazeboRosRbn100::motorPowerCB(const rbn100_msgs::MotorPowerPtr &msg)
 void GazeboRosRbn100::resetOdomCB(const std_msgs::EmptyConstPtr &msg)
 {
   ROS_INFO_STREAM("Reset Odom CB!");
+
+  odom_.EncoderL = 0xfff * 1e5;
+  odom_.EncoderR = 0xfff * 1e5;
+
   odom_pose_[0] = 0.0;
   odom_pose_[1] = 0.0;
   odom_pose_[2] = 0.0;
@@ -373,7 +378,8 @@ void GazeboRosRbn100::setupRosApi(std::string& model_name)
 
   // pub of odom
   std::string odom_topic = odom_name_;
-  odom_pub_ = gazebo_ros_->node()->advertise<nav_msgs::Odometry>(odom_topic, 1);
+  // odom_pub_ = gazebo_ros_->node()->advertise<nav_msgs::Odometry>(odom_topic, 1);
+  odom_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::Encoder>(odom_topic, 1);
   ROS_INFO("%s: Advertise Odometry[%s]!", gazebo_ros_->info(), odom_topic.c_str());
 
   // pub of cliff

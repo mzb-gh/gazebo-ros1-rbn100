@@ -34,11 +34,16 @@
 #include <rbn100_msgs/MotorPower.h>
 #include <rbn100_msgs/CliffEvent.h>
 #include <rbn100_msgs/BumperEvent.h>
+#include <rbn100_msgs/Encoder.h>
 
 namespace gazebo
 {
 
 enum {LEFT= 0, RIGHT=1};
+#define ENCODER_N 5600
+#define PI 3.1415926
+//  放大以保留更多数据提高精度
+#define MAX_ENCODER 0xFFFFFF * 1e5
 
 class GazeboRosRbn100 : public ModelPlugin
 {
@@ -181,7 +186,7 @@ private:
   /// ROS publisher for odometry messages
   ros::Publisher odom_pub_;
   /// ROS message for odometry data
-  nav_msgs::Odometry odom_;
+  // nav_msgs::Odometry odom_;
   /// Flag for (not) publish tf transform for odom -> robot
   bool publish_tf_;
   /// TF transform publisher for the odom frame
@@ -264,6 +269,9 @@ private:
 
   common::Time rate_step_;
   common::Time imu_step_;
+
+  rbn100_msgs::Encoder odom_;
+  double m_per_encoder_;
 };
 
 } // namespace gazebo

@@ -52,7 +52,7 @@ void GazeboRosRbn100::updateOdometry(common::Time& step_time)
   std::string base_frame = gazebo_ros_->resolveTF("base_footprint");
   odom_.header.stamp = joint_state_.header.stamp;
   odom_.header.frame_id = odom_frame;
-  odom_.child_frame_id = base_frame;
+  // odom_.child_frame_id = base_frame;
 
   // Distance travelled by main wheels
   double d1, d2;
@@ -61,82 +61,89 @@ void GazeboRosRbn100::updateOdometry(common::Time& step_time)
   dr = da = 0;
   d1 = step_time.Double() * (wheel_diam_ / 2) * joints_[LEFT]->GetVelocity(0);
   d2 = step_time.Double() * (wheel_diam_ / 2) * joints_[RIGHT]->GetVelocity(0);
-  // Can see NaN values here, just zero them out if needed
-  if (std::isnan(d1))
-  {
-    ROS_WARN_STREAM_THROTTLE(0.1, "Gazebo ROS Rbn100 plugin: NaN in d1. Step time: " << step_time.Double()
-                             << ", WD: " << wheel_diam_ << ", velocity: " << joints_[LEFT]->GetVelocity(0));
-    d1 = 0;
-  }
-  if (std::isnan(d2))
-  {
-    ROS_WARN_STREAM_THROTTLE(0.1, "Gazebo ROS Rbn100 plugin: NaN in d2. Step time: " << step_time.Double()
-                             << ", WD: " << wheel_diam_ << ", velocity: " << joints_[RIGHT]->GetVelocity(0));
-    d2 = 0;
-  }
-  dr = (d1 + d2) / 2;
-  da = (d2 - d1) / wheel_sep_; // ignored
+  /* 
+    计算码盘值
+   */
+  odom_.EncoderL += (uint64_t)(d1 / m_per_encoder_ * 1e5);
+  odom_.EncoderR += (uint64_t)(d2 / m_per_encoder_ * 1e5);
+  odom_pub_.publish(odom_);
 
-  // Just as in the Rbn100 driver, the angular velocity is taken directly from the IMU
-  vel_angular_ = imu_->AngularVelocity();
+  // // Can see NaN values here, just zero them out if needed
+  // if (std::isnan(d1))
+  // {
+  //   ROS_WARN_STREAM_THROTTLE(0.1, "Gazebo ROS Rbn100 plugin: NaN in d1. Step time: " << step_time.Double()
+  //                            << ", WD: " << wheel_diam_ << ", velocity: " << joints_[LEFT]->GetVelocity(0));
+  //   d1 = 0;
+  // }
+  // if (std::isnan(d2))
+  // {
+  //   ROS_WARN_STREAM_THROTTLE(0.1, "Gazebo ROS Rbn100 plugin: NaN in d2. Step time: " << step_time.Double()
+  //                            << ", WD: " << wheel_diam_ << ", velocity: " << joints_[RIGHT]->GetVelocity(0));
+  //   d2 = 0;
+  // }
+  // dr = (d1 + d2) / 2;
+  // da = (d2 - d1) / wheel_sep_; // ignored
 
-  // Compute odometric pose
-  odom_pose_[0] += dr * cos( odom_pose_[2] );
-  odom_pose_[1] += dr * sin( odom_pose_[2] );
+  // // Just as in the Rbn100 driver, the angular velocity is taken directly from the IMU
+  // vel_angular_ = imu_->AngularVelocity();
 
-  #if GAZEBO_MAJOR_VERSION >= 9
-    odom_pose_[2] += vel_angular_.Z() * step_time.Double();
-  #else
-    odom_pose_[2] += vel_angular_.z * step_time.Double();
-  #endif
+  // // Compute odometric pose
+  // odom_pose_[0] += dr * cos( odom_pose_[2] );
+  // odom_pose_[1] += dr * sin( odom_pose_[2] );
 
-  // Compute odometric instantaneous velocity
-  odom_vel_[0] = dr / step_time.Double();
-  odom_vel_[1] = 0.0;
+  // #if GAZEBO_MAJOR_VERSION >= 9
+  //   odom_pose_[2] += vel_angular_.Z() * step_time.Double();
+  // #else
+  //   odom_pose_[2] += vel_angular_.z * step_time.Double();
+  // #endif
 
-  #if GAZEBO_MAJOR_VERSION >= 9
-    odom_vel_[2] = vel_angular_.Z();
+  // // Compute odometric instantaneous velocity
+  // odom_vel_[0] = dr / step_time.Double();
+  // odom_vel_[1] = 0.0;
 
-  #else
-    odom_vel_[2] = vel_angular_.z;
-  #endif
+  // #if GAZEBO_MAJOR_VERSION >= 9
+  //   odom_vel_[2] = vel_angular_.Z();
 
-  odom_.pose.pose.position.x = odom_pose_[0];
-  odom_.pose.pose.position.y = odom_pose_[1];
-  odom_.pose.pose.position.z = 0;
+  // #else
+  //   odom_vel_[2] = vel_angular_.z;
+  // #endif
 
-  tf::Quaternion qt;
-  qt.setEuler(0,0,odom_pose_[2]);
-  odom_.pose.pose.orientation.x = qt.getX();
-  odom_.pose.pose.orientation.y = qt.getY();
-  odom_.pose.pose.orientation.z = qt.getZ();
-  odom_.pose.pose.orientation.w = qt.getW();
+  // odom_.pose.pose.position.x = odom_pose_[0];
+  // odom_.pose.pose.position.y = odom_pose_[1];
+  // odom_.pose.pose.position.z = 0;
 
-  odom_.pose.covariance[0]  = 0.1;
-  odom_.pose.covariance[7]  = 0.1;
-  odom_.pose.covariance[14] = 1e6;
-  odom_.pose.covariance[21] = 1e6;
-  odom_.pose.covariance[28] = 1e6;
-  odom_.pose.covariance[35] = 0.05;
+  // tf::Quaternion qt;
+  // qt.setEuler(0,0,odom_pose_[2]);
+  // odom_.pose.pose.orientation.x = qt.getX();
+  // odom_.pose.pose.orientation.y = qt.getY();
+  // odom_.pose.pose.orientation.z = qt.getZ();
+  // odom_.pose.pose.orientation.w = qt.getW();
 
-  odom_.twist.twist.linear.x = odom_vel_[0];
-  odom_.twist.twist.linear.y = 0;
-  odom_.twist.twist.linear.z = 0;
-  odom_.twist.twist.angular.x = 0;
-  odom_.twist.twist.angular.y = 0;
-  odom_.twist.twist.angular.z = odom_vel_[2];
-  odom_pub_.publish(odom_); // publish odom message
+  // odom_.pose.covariance[0]  = 0.1;
+  // odom_.pose.covariance[7]  = 0.1;
+  // odom_.pose.covariance[14] = 1e6;
+  // odom_.pose.covariance[21] = 1e6;
+  // odom_.pose.covariance[28] = 1e6;
+  // odom_.pose.covariance[35] = 0.05;
 
-  if (publish_tf_)
-  {
-    odom_tf_.header = odom_.header;
-    odom_tf_.child_frame_id = odom_.child_frame_id;
-    odom_tf_.transform.translation.x = odom_.pose.pose.position.x;
-    odom_tf_.transform.translation.y = odom_.pose.pose.position.y;
-    odom_tf_.transform.translation.z = odom_.pose.pose.position.z;
-    odom_tf_.transform.rotation = odom_.pose.pose.orientation;
-    tf_broadcaster_.sendTransform(odom_tf_);
-  }
+  // odom_.twist.twist.linear.x = odom_vel_[0];
+  // odom_.twist.twist.linear.y = 0;
+  // odom_.twist.twist.linear.z = 0;
+  // odom_.twist.twist.angular.x = 0;
+  // odom_.twist.twist.angular.y = 0;
+  // odom_.twist.twist.angular.z = odom_vel_[2];
+  // // odom_pub_.publish(odom_);
+
+  // if (publish_tf_)
+  // {
+  //   odom_tf_.header = odom_.header;
+  //   odom_tf_.child_frame_id = odom_.child_frame_id;
+  //   odom_tf_.transform.translation.x = odom_.pose.pose.position.x;
+  //   odom_tf_.transform.translation.y = odom_.pose.pose.position.y;
+  //   odom_tf_.transform.translation.z = odom_.pose.pose.position.z;
+  //   odom_tf_.transform.rotation = odom_.pose.pose.orientation;
+  //   tf_broadcaster_.sendTransform(odom_tf_);
+  // }
 }
 
 /*

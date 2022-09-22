@@ -397,7 +397,7 @@
   <gazebo>
     <plugin name="rbn100_controller" filename="libgazebo_ros_rbn100.so">
       <rosDebugLevel>Info</rosDebugLevel>
-      <publish_tf>1</publish_tf>
+      <publish_tf>0</publish_tf>
       <left_wheel_joint_name>left_wheel_joint</left_wheel_joint_name>
       <right_wheel_joint_name>right_wheel_joint</right_wheel_joint_name>
       <wheel_separation>0.322</wheel_separation>
@@ -414,6 +414,7 @@
       <bumper_name>bumper</bumper_name>
       <imu_name>imu</imu_name>
       <update_rate>50</update_rate>
+      <!-- sim rate has to be 1000Hz for good imu data -->
       <imu_rate>500</imu_rate>
     </plugin>
   </gazebo>
