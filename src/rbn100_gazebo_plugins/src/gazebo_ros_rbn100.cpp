@@ -37,6 +37,7 @@ GazeboRosRbn100::GazeboRosRbn100() : shutdown_requested_(false)
   console_log_rate = 1;
   rate_step_ = 0;
   imu_step_ = 0;
+  sonar_step_ = 0;
 }
 
 // deconstructor
@@ -55,6 +56,7 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
 {
   model_ = parent;
   std::string world_name = model_->GetWorld()->Name();
+  
   if (!model_)
   {
     ROS_ERROR_STREAM("Load: Invalid model pointer! [" << node_name_ << "]");
@@ -105,15 +107,13 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
     return;
   if(prepareIMU() == false)
     return;
+  // if(prepareUltra() == false)
+    // return;
 
   setupRosApi(model_name);
 
-  #if GAZEBO_MAJOR_VERSION >= 9
-    // prev_update_time_ = world_->SimTime();
-    prev_update_time_.Set(ros::Time::now().sec, ros::Time::now().nsec);
-  #else
-    prev_update_time_ = world_->GetSimTime();
-  #endif
+  // prev_update_time_ = world_->SimTime();
+  prev_update_time_.Set(ros::Time::now().sec, ros::Time::now().nsec);
 
   ROS_INFO_STREAM("GazeboRosRbn100 plugin ready to go! [" << node_name_ << "]");
   // Listen to the update event. This event is broadcast every simulation iteration.
@@ -130,16 +130,17 @@ void GazeboRosRbn100::OnUpdate()
   common::Time time_now;
   time_now.Set(ros::Time::now().sec, ros::Time::now().nsec);
 
+  updateJointState();
   /* 
     rate control
    */
   common::Time step_time = time_now - prev_update_time_;
   imu_step_ += step_time;
   rate_step_ += step_time;
+  sonar_step_ += step_time;
   
   if(rate_step_.Double() >= (1.0 / update_rate_)){
     updateOdometry(rate_step_);
-    updateJointState();
     propagateVelocityCommands();
     rate_step_ = 0;
   }
@@ -147,6 +148,10 @@ void GazeboRosRbn100::OnUpdate()
     updateIMU();
     imu_step_ = 0;
   }
+  // if(sonar_step_.Double() >= (1.0 / sonar_rate_)){
+  //   updateUltra();
+  //   sonar_step_ = 0;
+  // }
   updateBumper();
   updateCliffSensor();
   prev_update_time_ = time_now;

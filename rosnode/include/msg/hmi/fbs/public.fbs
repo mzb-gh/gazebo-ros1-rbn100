@@ -1,0 +1,118 @@
+
+namespace RBN100;
+
+enum FRequestType:byte 
+{
+    Video = 0,       //请求视频
+    ScanQR,          //扫码
+    CreateSence,     //创建场景
+    CreateMap_Tag,       //创建地图
+    CreateMap_Any,   //任意点建图
+    CreateMap_Elevator, //电梯建图
+    CreateMapStop,  //建图结束
+    CreatePoseNode, //创建位姿节点
+    CreateStartNode, //创建启动定位节点
+    CreateStandByNode,   //待命节点
+    CreatePassNode,     //途经节点
+    CreateJMRNode,     //JMR配送节点
+    ElevatorInfoInput,      //电梯信息录入
+    CreateElevatorOutNode,  //电梯前节点
+    CreateElevatorInNode,   //电梯内节点
+    CreateElevatorTransformNode,    //电梯坐标转换节点
+    CreateActionStandBy,    //待命节点动作
+    CreateActionJMR,        //JMR配送节点动作
+    CreateActionStart,      //启动节点动作
+    CreateActionElevatorOut,    //电梯外节点动作
+    CreateActionElevatorIn,     //电梯内节点动作
+    CreateActionElevatorTransf, //电梯左边转换节点动作
+    SetTaskInfo,   //下发任务
+    SetSubTask,    //解析后的子任务
+    SetPath, //设置路径
+    Login, //登录
+    GetSenceList, //获取场景列表
+    SetState, //设置状态机状态切换
+    GetAllNode, //获取节点及动作点
+    GetAllPath, //获取路径列表
+    GetAllMap, //获取地图列表
+    GetSysTime, //获取系统时间
+    SetSysTime, //设置系统时间
+    OpenHatch,  //开舱门
+    CloseHatch, //关舱门
+    GetWifi, //获取wifi信号
+    GetBattery, //获取电量
+    ElevatorState, //电梯门状态
+    TaskStop,   //终止任务  
+    TaskPause,  //暂停任务
+    TaskReStart, //重启任务
+}
+
+table FPoint
+{
+    x:float;
+    y:float;
+}
+
+table FPoseTransParm
+{
+    x:float;
+    y:float;
+    q_w:float;
+    q_x:float;
+    q_y:float;
+    q_z:float;
+}
+
+enum FNodeType:byte
+{
+    PoseNode = 0,   //位姿节点
+    StartNode,      //启动节点
+    StandByNode,    //待命节点
+    PassNode,       //途经节点
+    JMRNode,         //JM demo 配送节点
+    ElevatorInNode,   //电梯内节点
+    ElevatorOutNode,   //电梯外节点
+    ElevatorTransformNode,   //电梯坐标系转换节点
+}
+
+enum FMarkerState : byte 
+{
+    Success = 0,
+    ImageIsEmpty,       // 图像为空
+    ImageNotGray,       // 图像不是灰色的
+    TargetNoIdDetected,     // 未检测到目标Id
+    TargetMoreThanOneIdDetected,        // 目标检测到多个Id
+    TargetMatchNotUnique,       // 目标匹配不唯一
+    TargetOnlyIdDetected,       // 仅检测到Id
+    TargetIsNotPlane,       // 目标不是平的
+    TargetNotWorkspaceTooFar,       // 目标太远
+    TargetNotWorkspaceTooClose,     // 目标太近
+    TargetNotWorkspaceOutOfDegreeRange,     // 目标超出度数范围
+    TargetNotWorkspaceOutOfDegreeRangeLeft,  // 目标左边超出度数范围
+    TargetNotWorkspaceOutOfDegreeRangeRight,  // 目标右边超出度数范围
+    TargetWorkspaceTilt,        // 目标工作区倾斜超过度数
+    TargetWorkspaceTiltLeft,        // 目标工作区左边倾斜超过度数
+    TargetWorkspaceTiltRight,        // 目标工作区右边倾斜超过度数
+    TargetWorkspacePitch,   //   目标工作区俯仰超过度数
+    TargetWorkspacePitchUp,   //   目标工作区向上俯仰超过度数
+    TargetWorkspacePitchDown,   //   目标工作区向下俯仰超过度数
+    TargetWorkspaceSideWay,        // 目标工作区歪倒超过度数
+    TargetWorkspaceSideWayLeft,        // 目标工作区左边歪倒超过度数
+    TargetWorkspaceSideWayRight,        // 目标工作区右边歪倒超过度数
+    TargetWorkspaceFlip,  // 目标倒置
+    Unknown,        // 未知状态
+}
+
+enum FElevatorDoorState : byte
+{
+    UNKNOWN = 0,
+    OPEN,           //开门状态
+    CLOSE,          //关门状态
+    OPENING,        //开门中
+    CLOSEING,       //关门中
+}
+
+table Public
+{
+}
+
+root_type Public;

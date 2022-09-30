@@ -215,8 +215,6 @@ Visualization Manager:
           Value: false
         lidar:
           Value: false
-        odom:
-          Value: false
         right_wheel:
           Value: false
         sonar_FL:
@@ -243,51 +241,50 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        odom:
-          base_footprint:
-            base_link:
-              back_caster:
-                {}
-              bumper:
-                {}
-              camera:
-                {}
-              cliff_BL:
-                {}
-              cliff_BR:
-                {}
-              cliff_FL:
-                {}
-              cliff_FR:
-                {}
-              front_caster:
-                {}
-              imu:
-                {}
-              lidar:
-                {}
-              sonar_FL:
-                {}
-              sonar_FR:
-                {}
-              sonar_back:
-                {}
-              sonar_front:
-                {}
-              tof:
-                kinect:
-                  {}
-              universal_BL:
-                {}
-              universal_BR:
-                {}
-              universal_FL:
-                {}
-              universal_FR:
-                {}
+        base_footprint:
+          base_link:
+            back_caster:
+              {}
+            bumper:
+              {}
+            camera:
+              {}
+            cliff_BL:
+              {}
+            cliff_BR:
+              {}
+            cliff_FL:
+              {}
+            cliff_FR:
+              {}
+            front_caster:
+              {}
+            imu:
+              {}
             left_wheel:
               {}
+            lidar:
+              {}
             right_wheel:
+              {}
+            sonar_FL:
+              {}
+            sonar_FR:
+              {}
+            sonar_back:
+              {}
+            sonar_front:
+              {}
+            tof:
+              kinect:
+                {}
+            universal_BL:
+              {}
+            universal_BR:
+              {}
+            universal_FL:
+              {}
+            universal_FR:
               {}
       Update Interval: 0
       Value: true
@@ -361,7 +358,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.019999999552965164
       Style: Flat Squares
-      Topic: /scan
+      Topic: /simscan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -398,7 +395,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: odom
+    Fixed Frame: base_footprint
     Frame Rate: 30
   Name: root
   Tools:
@@ -422,25 +419,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.6389758586883545
+      Distance: 14.665096282958984
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.31691354513168335
-        Y: 0.1368589550256729
-        Z: 0.3769580125808716
+        X: 2.263378858566284
+        Y: 1.6320480108261108
+        Z: 1.3740627765655518
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.034796833992004395
+      Pitch: 0.8797965049743652
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 6.1736369132995605
+      Yaw: 3.0954504013061523
     Saved: ~
 Window Geometry:
   Camera:

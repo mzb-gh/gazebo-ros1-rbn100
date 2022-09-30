@@ -125,9 +125,9 @@ bool GazeboRosRbn100::prepareOdom()
   odom_.EncoderR = 0xfff * 1e5;
   m_per_encoder_ = PI * wheel_diam_ / ENCODER_N;
 
-  odom_pose_[0] = 0.0;
-  odom_pose_[1] = 0.0;
-  odom_pose_[2] = 0.0;
+  // odom_pose_[0] = 0.0;
+  // odom_pose_[1] = 0.0;
+  // odom_pose_[2] = 0.0;
 
   return true;
 }
@@ -269,39 +269,123 @@ bool GazeboRosRbn100::prepareBumper()
 
 bool GazeboRosRbn100::prepareIMU()
 {
-  if (sdf_->HasElement("imu_name"))
-  {
+  if (sdf_->HasElement("imu_name")){
     imu_name_ = sdf_->GetElement("imu_name")->Get<std::string>();
   }
-  else
-  {
+  else{
     ROS_ERROR_STREAM("Couldn't find the name of IMU sensor in the model description!"
                      << " Did you specify it?" << " [" << node_name_ <<"]");
     return false;
   }
-  if (!sdf_->HasElement("imu_rate"))
-  {
+  if (!sdf_->HasElement("imu_rate")){
     ROS_DEBUG_NAMED("imu", "imu plugin missing <bumper_rate>, defaults to 0.0"
              " (as fast as possible)");
     imu_rate_ = 0.0;
-  }
-  else
+  }else
     imu_rate_ = sdf_->GetElement("imu_rate")->Get<double>();
 
-  #if GAZEBO_MAJOR_VERSION >= 9
-    imu_ = std::dynamic_pointer_cast<sensors::ImuSensor>(
-            sensors::get_sensor(world_->Name()+"::"+node_name_+"::base_footprint::"+imu_name_));
-  #else
-    imu_ = std::dynamic_pointer_cast<sensors::ImuSensor>(
-            sensors::get_sensor(world_->GetName()+"::"+node_name_+"::base_footprint::"+imu_name));
-
-  #endif
-  if (!imu_)
-  {
+  imu_ = std::dynamic_pointer_cast<sensors::ImuSensor>(
+      sensors::get_sensor(world_->Name()+"::"+node_name_+"::base_footprint::"+imu_name_));
+  if (!imu_){
     ROS_ERROR_STREAM("Couldn't find the IMU in the model! [" << node_name_ <<"]");
     return false;
   }
   imu_->SetActive(true);
+  return true;
+}
+
+bool GazeboRosRbn100::prepareUltra(){
+  // sonar name
+  std::string sonar_FL_name, sonar_front_name, sonar_FR_name, sonar_back_name;
+  // read sensor info from model description
+  if(sdf_->HasElement("sonar_FL_name")){
+    sonar_FL_name = sdf_->GetElement("sonar_FL_name")->Get<std::string>();
+  }else{
+    ROS_WARN_STREAM("Couldn't found sonar_Fl_name element in model description, please check!");
+    return false;
+  }
+
+  if(sdf_->HasElement("sonar_front_name")){
+    sonar_front_name = sdf_->GetElement("sonar_front_name")->Get<std::string>();
+  }else{
+    ROS_WARN_STREAM("Couldn't find sonar_front_name element in model description, please check!");
+    return false;
+  }
+  
+  if(sdf_->HasElement("sonar_FR_name")){
+    sonar_FR_name = sdf_->GetElement("sonar_FR_name")->Get<std::string>();
+  }else{
+    ROS_WARN_STREAM("Couldn't find sonar_FR_name element in model decription, please check!");
+    return false;
+  }
+
+  if(sdf_->HasElement("sonar_back_name")){
+    sonar_back_name = sdf_->GetElement("sonar_back_name")->Get<std::string>();
+  }else{
+    ROS_WARN_STREAM("Couldn't find sonar_back_name element in model description, please check!");
+    return false;
+  }
+
+  if(sdf_->HasElement("sonar_noise")){
+    sonar_noise_ = sdf_->GetElement("sonar_noise")->Get<double>();
+  }else{
+    ROS_WARN_STREAM("Couldn't find sonar_noise element in model description, please check");
+  }
+
+  if(sdf_->HasElement("sonar_radiation")){
+    sonar_radiation_ = sdf_->GetElement("sonar_radiation")->Get<std::string>();
+  }else{
+    ROS_WARN_STREAM("Couldn't find sonar_radiation element in model description, please check");
+  }
+
+  if(sdf_->HasElement("sonar_fov")){
+    sonar_fov_ = sdf_->GetElement("sonar_fov")->Get<double>();
+  }else{
+    ROS_WARN_STREAM("Couldn't find sonar_fov element in model description, please check");
+  }
+  
+  if(sdf_->HasElement("sonar_rate")){
+    sonar_rate_ = sdf_->GetElement("sonar_rate")->Get<int>();
+  }else{
+    ROS_WARN_STREAM("Couldn't find sonar_rate element in model description, please check");
+  }
+
+  // get sensor obj from model via sensor name
+  sonar_sensor_FL_ = std::dynamic_pointer_cast<sensors::RaySensor>(
+      sensors::SensorManager::Instance()->GetSensor(sonar_FL_name));
+  sonar_sensor_front_ = std::dynamic_pointer_cast<sensors::RaySensor>(
+      sensors::SensorManager::Instance()->GetSensor(sonar_front_name));
+  sonar_sensor_FR_ = std::dynamic_pointer_cast<sensors::RaySensor>(
+      sensors::SensorManager::Instance()->GetSensor(sonar_FR_name));
+  sonar_sensor_back_ = std::dynamic_pointer_cast<sensors::RaySensor>(
+      sensors::SensorManager::Instance()->GetSensor(sonar_back_name));
+
+  if(!sonar_sensor_FL_){
+    ROS_ERROR_STREAM("Couldn't find the sonar_FL sensor in the model, please check!");
+    return false;
+  }
+  if(!sonar_sensor_FL_){
+    ROS_ERROR_STREAM("Couldn't find the sonar_front sensor in the model, please check!");
+    return false;
+  }
+  if(!sonar_sensor_FL_){
+    ROS_ERROR_STREAM("Couldn't find the sonar_FR sensor in the model, please check!");
+    return false;
+  }
+  if(!sonar_sensor_FL_){
+    ROS_ERROR_STREAM("Couldn't find the sonar_back sensor in the model, please check!");
+    return false;
+  }
+
+  samples_ = sonar_sensor_FL_->LaserShape()->GetSampleCount() * 
+      sonar_sensor_FL_->LaserShape()->GetVerticalSampleCount();
+
+  // active sensor
+  sonar_sensor_FL_->SetActive(true);
+  sonar_sensor_front_->SetActive(true);
+  sonar_sensor_FR_->SetActive(true);
+  sonar_sensor_back_->SetActive(true);
+
   return true;
 }
 
@@ -332,9 +416,9 @@ void GazeboRosRbn100::resetOdomCB(const std_msgs::EmptyConstPtr &msg)
   odom_.EncoderL = 0xfff * 1e5;
   odom_.EncoderR = 0xfff * 1e5;
 
-  odom_pose_[0] = 0.0;
-  odom_pose_[1] = 0.0;
-  odom_pose_[2] = 0.0;
+  // odom_pose_[0] = 0.0;
+  // odom_pose_[1] = 0.0;
+  // odom_pose_[2] = 0.0;
 }
 
 void GazeboRosRbn100::cmdVelCB(const geometry_msgs::TwistConstPtr &msg)
@@ -396,6 +480,11 @@ void GazeboRosRbn100::setupRosApi(std::string& model_name)
   std::string imu_topic = base_prefix + "/sensors/" + imu_name_;
   imu_pub_ = gazebo_ros_->node()->advertise<sensor_msgs::Imu>(imu_topic, 1);
   ROS_INFO("%s: Advertise IMU[%s]!", gazebo_ros_->info(), imu_topic.c_str());
+
+  // pub of ultra
+  std::string ultra_topic = base_prefix + "/sensors/ultra";
+  ultra_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::Ultra>(ultra_topic, 1);
+  ROS_INFO("%s: Advertise Ultra[%s]!", gazebo_ros_->info(), ultra_topic.c_str());
 
   // pub of motor power state
   // std::string motor_power_state_topic = base_prefix + "/events/motor_power_state";

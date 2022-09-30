@@ -50,7 +50,7 @@ void GazeboRosRbn100::updateOdometry(common::Time& step_time)
 {
   std::string odom_frame = gazebo_ros_->resolveTF("odom");
   std::string base_frame = gazebo_ros_->resolveTF("base_footprint");
-  odom_.header.stamp = joint_state_.header.stamp;
+  odom_.header.stamp = ros::Time::now();
   odom_.header.frame_id = odom_frame;
   // odom_.child_frame_id = base_frame;
 
@@ -151,7 +151,8 @@ void GazeboRosRbn100::updateOdometry(common::Time& step_time)
  */
 void GazeboRosRbn100::updateIMU()
 {
-  imu_msg_.header = joint_state_.header;
+  imu_msg_.header.frame_id = imu_name_;
+  imu_msg_.header.stamp = ros::Time::now();
 
   #if GAZEBO_MAJOR_VERSION >= 9
     ignition::math::Quaterniond quat = imu_->Orientation();
@@ -314,6 +315,45 @@ void GazeboRosRbn100::updateCliffSensor()
   }
 }
 
+void GazeboRosRbn100::updateUltra(){
+  // set time to now
+  ultra_msg_.head.stamp = ros::Time::now();
+  // every iteration, init distance to max
+  for (int i = 0; i < SONAR_NUM; i++)
+  {
+    ultra_msg_.distance[i] = sonar_sensor_FL_->RangeMax();
+  }
+  // read range of all samples
+  for (int i = 0; i < samples_; i++){
+    // read range of a ray
+    double ray_FL = sonar_sensor_FL_->LaserShape()->GetRange(i);
+    double ray_front = sonar_sensor_front_->LaserShape()->GetRange(i);
+    double ray_FR = sonar_sensor_FR_->LaserShape()->GetRange(i);
+    double ray_back = sonar_sensor_back_->LaserShape()->GetRange(i);
+    // get the minest value
+    if(ray_FL < ultra_msg_.distance[0])
+      ultra_msg_.distance[0] = ray_FL;
+    if(ray_front < ultra_msg_.distance[1])
+      ultra_msg_.distance[1] = ray_front;
+    if(ray_FR < ultra_msg_.distance[2])
+      ultra_msg_.distance[2] = ray_FR;
+    if(ray_back < ultra_msg_.distance[3])
+      ultra_msg_.distance[3] = ray_back;
+  }
+  // add noise and limit to [min, max] range
+  for (int i = 0; i < SONAR_NUM; i++)
+  {
+    int noise_range = ultra_msg_.distance[i] + GaussianKernel(0, sonar_noise_);
+    if(noise_range > sonar_sensor_FL_->RangeMax())
+      ultra_msg_.distance[i] = sonar_sensor_FL_->RangeMax();
+    else if(noise_range < sonar_sensor_FL_->RangeMin())
+      ultra_msg_.distance[i] = sonar_sensor_FL_->RangeMin();
+    else
+      ultra_msg_.distance[i] = noise_range;
+  }
+  ultra_pub_.publish(ultra_msg_);
+}
+
 /*
  * Bumpers
  */
@@ -342,6 +382,7 @@ void GazeboRosRbn100::updateBumper()
     bumper_was_pressed_ = true;
     bumper_event_.state = rbn100_msgs::BumperEvent::PRESSED;
     bumper_event_.bumper = rbn100_msgs::BumperEvent::body;
+    bumper_event_.stamp = ros::Time::now();
     bumper_event_pub_.publish(bumper_event_);
   }
   else if (!bumper_is_pressed_ && bumper_was_pressed_)
@@ -350,6 +391,7 @@ void GazeboRosRbn100::updateBumper()
     bumper_was_pressed_ = false;
     bumper_event_.state = rbn100_msgs::BumperEvent::RELEASED;
     bumper_event_.bumper = rbn100_msgs::BumperEvent::body;
+    bumper_event_.stamp = ros::Time::now();
     bumper_event_pub_.publish(bumper_event_);
   }
 }
@@ -363,4 +405,26 @@ void GazeboRosRbn100::updateBumper()
   msg.state = motors_enabled_;
   motor_power_state_pub_.publish(msg);
 } */
+
+// Utility for adding noise
+double GazeboRosRbn100::GaussianKernel(double mu, double sigma)
+{
+  // using Box-Muller transform to generate two independent standard
+  // normally disbributed normal variables see wikipedia
+
+  // normalized uniform random variable
+  double U = ignition::math::Rand::DblUniform();
+
+  // normalized uniform random variable
+  double V = ignition::math::Rand::DblUniform();
+
+  double X = sqrt(-2.0 * ::log(U)) * cos(2.0*M_PI * V);
+  // double Y = sqrt(-2.0 * ::log(U)) * sin(2.0*M_PI * V);
+
+  // there are 2 indep. vars, we'll just use X
+  // scale to our mu and sigma
+  X = sigma * X + mu;
+  return X;
+}
+
 }

@@ -26,6 +26,7 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/JointState.h>
+#include <sensor_msgs/Range.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -35,6 +36,7 @@
 #include <rbn100_msgs/CliffEvent.h>
 #include <rbn100_msgs/BumperEvent.h>
 #include <rbn100_msgs/Encoder.h>
+#include <rbn100_msgs/Ultra.h>
 
 namespace gazebo
 {
@@ -42,8 +44,7 @@ namespace gazebo
 enum {LEFT= 0, RIGHT=1};
 #define ENCODER_N 5600
 #define PI 3.1415926
-//  放大以保留更多数据提高精度
-#define MAX_ENCODER 0xFFFFFF * 1e5
+#define SONAR_NUM 4
 
 class GazeboRosRbn100 : public ModelPlugin
 {
@@ -73,6 +74,8 @@ private:
   void bumperAutoStopMotorCB(const std_msgs::BoolPtr &msg);
   // Callback for incoming forbidden cliff event press to stop motor power
   void cliffAutoStopMotorCB(const std_msgs::BoolPtr &msg);
+  // Callback for incoming ultra data
+  void ultraCB(const rbn100_msgs::Ultra::ConstPtr& msg);
 
   // void set_motor_enable(std::uint8_t _state);
   ///motor power state publisher
@@ -101,6 +104,8 @@ private:
   bool prepareCliffSensor();
   // obtain the object of bumper sensor and active it
   bool prepareBumper();
+  // obtain the object of sonar and active them
+  bool prepareUltra();
   // velocity timeout
   bool prepareVelocityCommand();
   //advertise or subscribe
@@ -115,7 +120,10 @@ private:
   void propagateVelocityCommands();
   void updateCliffSensor();
   void updateBumper();
+  void updateUltra();
   // void pubSensorState();
+
+  double GaussianKernel(double mu, double sigma);
 
   /*
    *  Parameters
@@ -193,34 +201,41 @@ private:
   tf::TransformBroadcaster tf_broadcaster_;
   /// TF transform for the odom frame
   geometry_msgs::TransformStamped odom_tf_;
-  /// Pointer to FL cliff sensor
+  /// Pointer to cliff sensor
   sensors::RaySensorPtr cliff_sensor_FL_;
-  /// Pointer to FR cliff sensor
   sensors::RaySensorPtr cliff_sensor_FR_;
-  /// Pointer to BL cliff sensor
   sensors::RaySensorPtr cliff_sensor_BL_;
-  /// Pointer to BR right sensor
   sensors::RaySensorPtr cliff_sensor_BR_;
   /// ROS publisher for cliff detection events
   ros::Publisher cliff_event_pub_;
   /// rbn100 ROS message for cliff event
   rbn100_msgs::CliffEvent cliff_event_;
-  // trigger event control
-  /// Cliff flag for the FL sensor
+  /// Cliff event flag
   bool cliff_detected_FL_;
-  /// Cliff flag for the FR sensor
   bool cliff_detected_FR_;
-  /// Cliff flag for the BL sensor
   bool cliff_detected_BL_;
-  /// Cliff flag for the BR sensor
   bool cliff_detected_BR_;
   /// measured distance in meter for detecting a cliff
   float cliff_detection_threshold_;
   
-  // flag of enable cliff and bumper stop motor or not
+  // stop motor flag
   bool cliff_auto_stop_motor_flag;
   bool bumper_auto_stop_motor_flag;
   
+  /// Pointer to sonar sensor
+  sensors::RaySensorPtr sonar_sensor_FL_;
+  sensors::RaySensorPtr sonar_sensor_front_;
+  sensors::RaySensorPtr sonar_sensor_FR_;
+  sensors::RaySensorPtr sonar_sensor_back_;
+  // ultra msg and pub
+  rbn100_msgs::Ultra ultra_msg_;
+  ros::Publisher ultra_pub_;
+  // ultra property
+  double sonar_noise_;
+  double sonar_fov_;
+  std::string sonar_radiation_;
+  int samples_;
+
   /// Maximum distance to floor
   int floot_dist_;
   /// Pointer to bumper sensor
@@ -266,9 +281,11 @@ private:
 
   double update_rate_;
   double imu_rate_;
+  double sonar_rate_;
 
   common::Time rate_step_;
   common::Time imu_step_;
+  common::Time sonar_step_;
 
   rbn100_msgs::Encoder odom_;
   double m_per_encoder_;

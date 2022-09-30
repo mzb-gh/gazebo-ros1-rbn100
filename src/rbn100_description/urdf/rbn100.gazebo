@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 
 <robot name="rbn100_chassis" xmlns:xacro="http://ros.org/wiki/xacro">
-
+  <!-- 
+    设置在gazebo中的摩擦力和插件等属性
+   -->
   <xacro:property name="visualize" value="false" />
-
   <gazebo reference="base_link">
     <material>Gazebo/Gold</material>
     <mu1>0.3</mu1>
@@ -73,6 +74,7 @@
   <xacro:caster_prop pos="back" />
 
   <!-- 插件程序中修改数据时间为硬件时间 -->
+  <!-- 暂时没从传感器对象中获取频率和采样数，更改这些需要手动更改程序 -->
   <!-- lidar -->
   <gazebo reference="lidar">
     <material>Gazebo/FlatBlack</material>
@@ -83,7 +85,7 @@
       <ray>
         <scan>
           <horizontal>
-            <samples>1535</samples>
+            <samples>1536</samples>
             <resolution>1</resolution>
             <min_angle>-2.356</min_angle>
             <max_angle>2.356</max_angle>
@@ -101,7 +103,7 @@
         </noise>
       </ray>
       <plugin name="lidar_controller" filename="libgazebo_ros_HTlaser.so">
-        <topicName>scan</topicName>
+        <topicName>simscan</topicName>
         <frameName>lidar</frameName>
       </plugin>
     </sensor>
@@ -132,8 +134,8 @@
           <!-- keep zero,parent tag sensor will control frame rate -->
           <updateRate>0</updateRate>
           <cameraName>tof</cameraName>
-          <imageTopicName>/rgb/image_raw</imageTopicName>
-          <cameraInfoTopicName>/rgb/camera_info</cameraInfoTopicName>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
           <depthImageTopicName>depth/image_raw</depthImageTopicName>
           <depthImageInfoTopicName>depth/camera_info</depthImageInfoTopicName>
           <pointCloudTopicName>depth/points</pointCloudTopicName>
@@ -205,20 +207,20 @@
       <sensor type="ray" name="sonar_${pos}">
         <pose>0 0 0 0 0 0</pose>
         <visualize>${visualize}</visualize>
-        <update_rate>15</update_rate>
+        <update_rate>10</update_rate>
         <ray>
           <scan>
             <horizontal>
-              <samples>8</samples>  <!-- need reconfirm -->
+              <samples>10</samples>  <!-- need reconfirm -->
               <resolution>1</resolution>
-              <min_angle>-0.523</min_angle> <!-- 15 * 2 degree -->
-              <max_angle>0.523</max_angle>
+              <min_angle>-0.2617</min_angle> <!-- 15 degree -->
+              <max_angle>0.2617</max_angle>
             </horizontal>
             <vertical>
-              <samples>8</samples>
+              <samples>10</samples>
               <resolution>1</resolution>
-              <min_angle>-0.523</min_angle>
-              <max_angle>0.523</max_angle>
+              <min_angle>-0.2617</min_angle>
+              <max_angle>0.2617</max_angle>
             </vertical>
           </scan>
           <range>
@@ -227,15 +229,13 @@
             <resolution>0.001</resolution>
           </range>
         </ray>
-        <plugin filename="libgazebo_ros_HTrange.so" name="sonar_controller">
+        <!-- <plugin filename="libgazebo_ros_HTrange.so" name="sonar_controller">
           <gaussianNoise>0.005</gaussianNoise>
-          <alwaysOn>true</alwaysOn>
-          <updateRate>0</updateRate>
           <topicName>sonar_${pos}</topicName>
           <frameName>sonar_${pos}</frameName>
           <radiation>ultrasound</radiation>
-          <fov>0.5</fov>  <!-- need confirm -->
-        </plugin>
+          <fov>0.523</fov>
+        </plugin> -->
       </sensor>
     </gazebo>
   </xacro:macro>
@@ -312,7 +312,10 @@
     </sensor>
   </gazebo>
 
-  <!-- ros sensor plugin -->
+  <!-- 
+      imu
+   -->
+  <!-- gazebo sensor plugin -->
   <!-- <gazebo reference="imu">
     <gravity>true</gravity>
     <sensor type="imu" name="imu">
@@ -333,7 +336,19 @@
     </sensor>
   </gazebo> -->
 
-  <!-- imu，kuboki -->
+  <!-- gazebo model plugin -->
+  <!-- <gazebo>
+    <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+      <alwaysOn>true</alwaysOn>
+      <bodyName>base_footprint</bodyName>
+      <topicName>imu</topicName>
+      <serviceName>imu_service</serviceName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <updateRate>20.0</updateRate>
+    </plugin>
+  </gazebo> -->
+
+  <!-- kuboki, find imu obj -->
   <gazebo reference="imu">
     <sensor type="imu" name="imu">
       <update_rate>500</update_rate>
@@ -343,11 +358,11 @@
           <type>gaussian</type>
           <rate>
             <mean>0.0</mean>
-            <stddev>${0.0014*0.0014}</stddev> <!-- 0.25 x 0.25 (deg/s) -->
+            <stddev>0.0014</stddev>
             <bias_mean>0.0</bias_mean>
             <bias_stddev>0.0</bias_stddev>
           </rate>
-          <accel> <!-- not used in the plugin and real robot, hence using tutorial values -->
+          <accel>
             <mean>0.0</mean>
             <stddev>1.7e-2</stddev>
             <bias_mean>0.1</bias_mean>
@@ -358,15 +373,17 @@
     </sensor>
   </gazebo>
 
-  <!-- ros control -->
+  <!-- 
+      control
+   -->
+  <!-- ros plugin, ros_control -->
   <!-- <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
       <robotNamespace>/rbn100</robotNamespace>
     </plugin>
   </gazebo> -->
 
-  <!-- ros diff dive control-->
-  <!-- 里面的参数不给出的话程序中都设置了默认值 -->
+  <!-- gazebo model plugin, diff drive -->
   <!-- <gazebo>
     <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
         <rosDebugLevel>Debug</rosDebugLevel>
@@ -392,8 +409,7 @@
     </plugin>
   </gazebo> -->
 
-  <!-- customize control -->
-  <!-- gazebo标签没有reference就指整个模型 -->
+  <!-- gazebo model plugin, customize -->
   <gazebo>
     <plugin name="rbn100_controller" filename="libgazebo_ros_rbn100.so">
       <rosDebugLevel>Info</rosDebugLevel>
@@ -410,12 +426,20 @@
       <cliff_sensor_BL_name>cliff_BL</cliff_sensor_BL_name>
       <cliff_sensor_BR_name>cliff_BR</cliff_sensor_BR_name>
       <cliff_detection_threshold>0.12</cliff_detection_threshold>
+      <sonar_FL_name>sonar_FL</sonar_FL_name>
+      <sonar_front_name>sonar_front</sonar_front_name>
+      <sonar_FR_name>sonar_FR</sonar_FR_name>
+      <sonar_back_name>sonar_back</sonar_back_name>
+      <sonar_noise>0.005</sonar_noise>
+      <sonar_radiation>ultrasound</sonar_radiation>
+      <sonar_fov>0.523</sonar_fov>
       <odom_name>odom</odom_name>
       <bumper_name>bumper</bumper_name>
       <imu_name>imu</imu_name>
       <update_rate>50</update_rate>
       <!-- sim rate has to be 1000Hz for good imu data -->
       <imu_rate>500</imu_rate>
+      <sonar_rate>10</sonar_rate>
     </plugin>
   </gazebo>
 </robot>

@@ -1,0 +1,124 @@
+include "public.fbs";
+
+namespace RBN100;
+
+enum FReportType:byte 
+{
+    //扫码
+    ReprotVideo = 0,       //请求视频
+    ReprotScanQR,          //扫码
+    ReprotGridMap,        //栅格地图
+    ReprotTaskStatus,
+    ReprotFault,
+    ReprotSelfTestPro,
+    ReprotGetWifi,
+    ReprotGetBattery,
+    ReportElevatorCtrl,
+}
+
+// 图像
+table FReportImage 
+{
+    time:double;          // 曝光时间
+    image:[ubyte];       // 左图
+}
+
+// 上报识别二维码结果
+table FReportScanQR 
+{
+    state:int;                     // 返回码 0:成功 other:失败
+    tagID:int;
+    tagIDExist:bool;
+    lb:FPoint;
+    rb:FPoint;
+    rt:FPoint;
+    lt:FPoint;
+    ct:FPoint;
+    x:float;
+    y:float;
+    z:float;
+    map_uuid:string;
+}
+
+table FGrid
+{
+    x:int;
+    y:int;
+    value:int8;
+}
+
+//增量地图
+table FReprotGridMap
+{
+    map:[FGrid];
+}
+
+table FReportNeedCreateMap 
+{
+    state:bool;
+}
+
+//任务状态上报
+table FReportTaskStatus
+{
+    value:int; //参数待定
+}
+
+
+//故障上报
+table FReportFault
+{
+    code:int; //参数待定
+}
+
+//自检进度上报
+table FReprotSelfTestPro
+{
+    value:int; //自检进度
+}
+
+//wifi
+table FReprotGetWifi
+{
+    status:int; //0:未连接 非0：已连接
+    value:int; //信号强度0-100
+}
+
+
+//获取电量
+table FReprotGetBattery
+{
+    value:float;
+}
+
+//电梯控制
+table FReportElevatorCtrl
+{
+    id:string; //电梯uuid
+    type:int; // 0:开门  1:关门
+    mode:int; //0:进 1:出
+    floor:int; //目标楼层
+    direction:int; //0:向上  1:向下
+}
+
+union FReportDataField
+{
+    FReportScanQR,
+    FReportImage,
+    FReportNeedCreateMap,
+    FReprotGridMap,
+    FReportTaskStatus,
+    FReportFault,
+    FReprotSelfTestPro,
+    FReprotGetWifi,
+    FReprotGetBattery,
+    FReportElevatorCtrl,
+}
+
+table Report 
+{
+  type: FReportType;
+  data: FReportDataField;
+}
+
+root_type Report;
