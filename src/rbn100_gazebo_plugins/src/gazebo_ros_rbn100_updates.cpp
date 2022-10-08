@@ -319,10 +319,8 @@ void GazeboRosRbn100::updateUltra(){
   // set time to now
   ultra_msg_.head.stamp = ros::Time::now();
   // every iteration, init distance to max
-  for (int i = 0; i < SONAR_NUM; i++)
-  {
-    ultra_msg_.distance[i] = sonar_sensor_FL_->RangeMax();
-  }
+  double range_FL, range_front, range_FR, range_back;
+  range_FL = range_front = range_FR = range_back = sonar_sensor_front_->RangeMax();
   // read range of all samples
   for (int i = 0; i < samples_; i++){
     // read range of a ray
@@ -331,26 +329,49 @@ void GazeboRosRbn100::updateUltra(){
     double ray_FR = sonar_sensor_FR_->LaserShape()->GetRange(i);
     double ray_back = sonar_sensor_back_->LaserShape()->GetRange(i);
     // get the minest value
-    if(ray_FL < ultra_msg_.distance[0])
-      ultra_msg_.distance[0] = ray_FL;
-    if(ray_front < ultra_msg_.distance[1])
-      ultra_msg_.distance[1] = ray_front;
-    if(ray_FR < ultra_msg_.distance[2])
-      ultra_msg_.distance[2] = ray_FR;
-    if(ray_back < ultra_msg_.distance[3])
-      ultra_msg_.distance[3] = ray_back;
+    if(ray_FL < range_FL)
+      range_FL = ray_FL;
+    if(ray_front < range_front)
+      range_front = ray_front;
+    if(ray_FR < range_FR)
+      range_FR = ray_FR;
+    if(ray_back < range_back)
+      range_back = ray_back;
   }
   // add noise and limit to [min, max] range
-  for (int i = 0; i < SONAR_NUM; i++)
-  {
-    int noise_range = ultra_msg_.distance[i] + GaussianKernel(0, sonar_noise_);
-    if(noise_range > sonar_sensor_FL_->RangeMax())
-      ultra_msg_.distance[i] = sonar_sensor_FL_->RangeMax();
-    else if(noise_range < sonar_sensor_FL_->RangeMin())
-      ultra_msg_.distance[i] = sonar_sensor_FL_->RangeMin();
-    else
-      ultra_msg_.distance[i] = noise_range;
+  range_FL = range_FL + GaussianKernel(0, sonar_noise_);
+  if(range_FL > sonar_sensor_FL_->RangeMax()){
+    range_FL = sonar_sensor_FL_->RangeMax();
+  }else if(range_FL < sonar_sensor_FL_->RangeMin()){
+    range_FL = sonar_sensor_FL_->RangeMin();
   }
+
+  range_front = range_front + GaussianKernel(0, sonar_noise_);
+  if(range_front > sonar_sensor_FL_->RangeMax()){
+    range_front = sonar_sensor_FL_->RangeMax();
+  }else if(range_front < sonar_sensor_FL_->RangeMin()){
+    range_front = sonar_sensor_FL_->RangeMin();
+  }
+
+  range_FR = range_FR + GaussianKernel(0, sonar_noise_);
+  if(range_FR > sonar_sensor_FL_->RangeMax()){
+    range_FR = sonar_sensor_FL_->RangeMax();
+  }else if(range_front < sonar_sensor_FL_->RangeMin()){
+    range_FR = sonar_sensor_FL_->RangeMin();
+  }
+  
+  range_back = range_back + GaussianKernel(0, sonar_noise_);
+  if(range_back > sonar_sensor_FL_->RangeMax()){
+    range_back = sonar_sensor_FL_->RangeMax();
+  }else if(range_back < sonar_sensor_FL_->RangeMin()){
+    range_back = sonar_sensor_FL_->RangeMin();
+  }
+
+  ultra_msg_.distance[0] = range_FL;
+  ultra_msg_.distance[1] = range_front;
+  ultra_msg_.distance[2] = range_FR;
+  ultra_msg_.distance[3] = range_back;
+
   ultra_pub_.publish(ultra_msg_);
 }
 

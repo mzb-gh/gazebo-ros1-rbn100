@@ -1,0 +1,1 @@
+set sim_time and real_time to 0 in .world file for synchronize time for sim begin 

@@ -19,6 +19,7 @@
 #endif
 #include <gazebo/physics/physics.hh>
 #include <gazebo/sensors/sensors.hh>
+#include <gazebo/plugins/RayPlugin.hh>
 #include <gazebo_plugins/gazebo_ros_utils.h>
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>  //for cliff and bumper control
@@ -232,8 +233,6 @@ private:
   ros::Publisher ultra_pub_;
   // ultra property
   double sonar_noise_;
-  double sonar_fov_;
-  std::string sonar_radiation_;
   int samples_;
 
   /// Maximum distance to floor

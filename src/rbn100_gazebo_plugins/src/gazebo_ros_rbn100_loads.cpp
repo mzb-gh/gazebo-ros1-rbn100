@@ -331,19 +331,7 @@ bool GazeboRosRbn100::prepareUltra(){
   }else{
     ROS_WARN_STREAM("Couldn't find sonar_noise element in model description, please check");
   }
-
-  if(sdf_->HasElement("sonar_radiation")){
-    sonar_radiation_ = sdf_->GetElement("sonar_radiation")->Get<std::string>();
-  }else{
-    ROS_WARN_STREAM("Couldn't find sonar_radiation element in model description, please check");
-  }
-
-  if(sdf_->HasElement("sonar_fov")){
-    sonar_fov_ = sdf_->GetElement("sonar_fov")->Get<double>();
-  }else{
-    ROS_WARN_STREAM("Couldn't find sonar_fov element in model description, please check");
-  }
-  
+ 
   if(sdf_->HasElement("sonar_rate")){
     sonar_rate_ = sdf_->GetElement("sonar_rate")->Get<int>();
   }else{
@@ -379,7 +367,7 @@ bool GazeboRosRbn100::prepareUltra(){
 
   samples_ = sonar_sensor_FL_->LaserShape()->GetSampleCount() * 
       sonar_sensor_FL_->LaserShape()->GetVerticalSampleCount();
-
+  
   // active sensor
   sonar_sensor_FL_->SetActive(true);
   sonar_sensor_front_->SetActive(true);

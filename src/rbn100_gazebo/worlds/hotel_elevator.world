@@ -449,8 +449,8 @@
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
     <state world_name='default'>
-      <sim_time>178 559000000</sim_time>
-      <real_time>173 387534581</real_time>
+      <sim_time>0</sim_time>
+      <real_time>0</real_time>
       <wall_time>1662714913 444181030</wall_time>
       <iterations>172634</iterations>
       <model name='elevator'>

@@ -1,10 +1,14 @@
 <?xml version="1.0"?>
 
 <robot name="rbn100_chassis" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:property name="v_lidar" value="false" />
+  <xacro:property name="v_tof" value="false" />
+  <xacro:property name="v_camera" value="false" />
+  <xacro:property name="v_sonar" value="true" />
+  <xacro:property name="v_cliff" value="false" />
   <!-- 
     设置在gazebo中的摩擦力和插件等属性
    -->
-  <xacro:property name="visualize" value="false" />
   <gazebo reference="base_link">
     <material>Gazebo/Gold</material>
     <mu1>0.3</mu1>
@@ -80,7 +84,7 @@
     <material>Gazebo/FlatBlack</material>
     <sensor type="ray" name="lidar_sensor">
       <pose>0 0 0 0 0 0</pose>
-      <visualize>${visualize}</visualize>
+      <visualize>${v_lidar}</visualize>
       <update_rate>15</update_rate>
       <ray>
         <scan>
@@ -114,7 +118,7 @@
     <material>Gazebo/FlatBlack</material>
     <sensor type="depth" name="tof">
       <update_rate>10.0</update_rate>
-      <visualize>${visualize}</visualize>
+      <visualize>${v_tof}</visualize>
       <camera name="head_tof">
         <horizontal_fov>1.047198</horizontal_fov> <!-- 60 degree -->
         <image>
@@ -164,7 +168,7 @@
     <material>Gazebo/FlatBlack</material>
     <sensor type="camera" name="camera">
       <update_rate>25</update_rate>
-      <visualize>${visualize}</visualize>
+      <visualize>${v_camera}</visualize>
       <camera name="head_camera">
         <horizontal_fov>1.692</horizontal_fov> <!-- 97 degree -->
         <image>
@@ -206,7 +210,7 @@
       <material>Gazebo/FlatBlack</material>
       <sensor type="ray" name="sonar_${pos}">
         <pose>0 0 0 0 0 0</pose>
-        <visualize>${visualize}</visualize>
+        <visualize>${v_sonar}</visualize>
         <update_rate>10</update_rate>
         <ray>
           <scan>
@@ -251,7 +255,7 @@
       <sensor type="ray" name="cliff_${pos}">
         <always_on>true</always_on>
         <update_rate>50</update_rate>
-        <visualize>${visualize}</visualize>
+        <visualize>${v_cliff}</visualize>
         <ray>
           <scan>
             <horizontal>
@@ -296,7 +300,6 @@
     <selfCollide>false</selfCollide>
     <sensor name="bumper" type="contact">
       <update_rate>50.0</update_rate>
-      <visualize>${visualize}</visualize>
       <contact>
         <!-- 
           bumper是urdf中collision标签的名字，其他固定。
@@ -352,7 +355,6 @@
   <gazebo reference="imu">
     <sensor type="imu" name="imu">
       <update_rate>500</update_rate>
-      <visualize>${visualize}</visualize>
       <imu>
         <noise>
           <type>gaussian</type>
@@ -431,8 +433,6 @@
       <sonar_FR_name>sonar_FR</sonar_FR_name>
       <sonar_back_name>sonar_back</sonar_back_name>
       <sonar_noise>0.005</sonar_noise>
-      <sonar_radiation>ultrasound</sonar_radiation>
-      <sonar_fov>0.523</sonar_fov>
       <odom_name>odom</odom_name>
       <bumper_name>bumper</bumper_name>
       <imu_name>imu</imu_name>

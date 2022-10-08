@@ -107,8 +107,8 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
     return;
   if(prepareIMU() == false)
     return;
-  // if(prepareUltra() == false)
-    // return;
+  if(prepareUltra() == false)
+    return;
 
   setupRosApi(model_name);
 
@@ -148,10 +148,10 @@ void GazeboRosRbn100::OnUpdate()
     updateIMU();
     imu_step_ = 0;
   }
-  // if(sonar_step_.Double() >= (1.0 / sonar_rate_)){
-  //   updateUltra();
-  //   sonar_step_ = 0;
-  // }
+  if(sonar_step_.Double() >= (1.0 / sonar_rate_)){
+    updateUltra();
+    sonar_step_ = 0;
+  }
   updateBumper();
   updateCliffSensor();
   prev_update_time_ = time_now;
