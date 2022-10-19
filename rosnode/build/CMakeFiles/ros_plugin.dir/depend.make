@@ -59,4 +59,17 @@ CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /opt/ros/melodic/include/ros/wall_t
 CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /opt/ros/melodic/include/rosconsole/macros_generated.h
 CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /opt/ros/melodic/include/xmlrpcpp/XmlRpcDecl.h
 CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /opt/ros/melodic/include/xmlrpcpp/XmlRpcValue.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/select.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/select2.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/types.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/types/time_t.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/typesizes.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/bits/wordsize.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/sys/select.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/sys/time.h
+CMakeFiles/ros_plugin.dir/src/RosNode.cpp.o: /usr/include/x86_64-linux-gnu/sys/timeb.h
 

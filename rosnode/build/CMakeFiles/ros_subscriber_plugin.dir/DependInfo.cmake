@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/mzb/work/sim/rosnode/src/RosSubscriberNode.cpp" "/home/mzb/work/sim/rosnode/build/CMakeFiles/ros_subscriber_plugin.dir/src/RosSubscriberNode.cpp.o"
+  "/home/mzb/work/sim/rbn100_sim_ws/rosnode/src/RosSubscriberNode.cpp" "/home/mzb/work/sim/rbn100_sim_ws/rosnode/build/CMakeFiles/ros_subscriber_plugin.dir/src/RosSubscriberNode.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -18,8 +18,27 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../include"
+  "../../devel/include"
   "/opt/ros/melodic/include"
   "/opt/ros/melodic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp"
+  "/usr/include/eigen3"
+  "/usr/include/pcl-1.8"
+  "/usr/include/ni"
+  "/usr/include/openni2"
+  "/usr/include/vtk-6.3"
+  "/usr/include/freetype2"
+  "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi"
+  "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent"
+  "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent/include"
+  "/usr/lib/x86_64-linux-gnu/openmpi/include"
+  "/usr/include/python2.7"
+  "/usr/include/x86_64-linux-gnu"
+  "/usr/include/hdf5/openmpi"
+  "/usr/include/libxml2"
+  "/usr/include/jsoncpp"
+  "/usr/include/tcl"
+  "/usr/include/opencv2"
+  "/usr/include/opencv"
   )
 
 # Targets to which this target links.

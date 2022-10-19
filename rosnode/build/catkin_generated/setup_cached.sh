@@ -7,6 +7,6 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/home/mzb/work/sim/rosnode/build/devel:$CMAKE_PREFIX_PATH"
-export ROSLISP_PACKAGE_DIRECTORIES="/home/mzb/work/sim/rosnode/build/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
-export ROS_PACKAGE_PATH="/home/mzb/work/sim/rosnode:$ROS_PACKAGE_PATH"
+export CMAKE_PREFIX_PATH="/home/mzb/work/sim/rbn100_sim_ws/rosnode/build/devel:$CMAKE_PREFIX_PATH"
+export ROSLISP_PACKAGE_DIRECTORIES="/home/mzb/work/sim/rbn100_sim_ws/rosnode/build/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
+export ROS_PACKAGE_PATH="/home/mzb/work/sim/rbn100_sim_ws/rosnode:$ROS_PACKAGE_PATH"

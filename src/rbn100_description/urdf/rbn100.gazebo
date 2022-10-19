@@ -2,9 +2,9 @@
 
 <robot name="rbn100_chassis" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:property name="v_lidar" value="false" />
-  <xacro:property name="v_tof" value="false" />
+  <xacro:property name="v_tof" value="true" />
   <xacro:property name="v_camera" value="false" />
-  <xacro:property name="v_sonar" value="true" />
+  <xacro:property name="v_sonar" value="false" />
   <xacro:property name="v_cliff" value="false" />
   <!-- 
     设置在gazebo中的摩擦力和插件等属性
@@ -19,13 +19,13 @@
 
   <xacro:macro name="wheel_prop" params="pos" >
     <gazebo reference="${pos}_wheel">
+      <material>Gazebo/Gray</material>
       <mu1>0.54</mu1>
       <mu2>0.54</mu2>
       <kp>1000000.0</kp>
       <kd>100.0</kd>
       <minDepth>0.001</minDepth>
       <maxVel>20</maxVel>
-      <material>Gazebo/Gray</material>
     </gazebo>
   </xacro:macro>
   <xacro:wheel_prop pos="left" />
@@ -49,13 +49,13 @@
 
   <xacro:macro name="universal_prop" params="pos" >
     <gazebo reference="universal_${pos}">
+      <material>Gazebo/Gray</material>
       <mu1>0.01</mu1>
       <mu2>0.01</mu2>
       <kp>1000000.0</kp>
       <kd>100.0</kd>
       <minDepth>0.001</minDepth>
       <maxVel>20</maxVel>
-      <material>Gazebo/Gold</material>
     </gazebo>
   </xacro:macro>
   <xacro:universal_prop pos="FL" />
@@ -71,7 +71,7 @@
       <kd>100.0</kd>
       <minDepth>0.001</minDepth>
       <maxVel>20</maxVel>
-      <material>Gazebo/Gold</material>
+      <material>Gazebo/Gray</material>
     </gazebo>
   </xacro:macro>
   <xacro:caster_prop pos="front" />
@@ -134,7 +134,6 @@
       </camera>
       <plugin name="tof_controller" filename="libgazebo_ros_HTopenni_kinect.so">
           <baseline>0.1</baseline>
-          <alwaysOn>true</alwaysOn>
           <!-- keep zero,parent tag sensor will control frame rate -->
           <updateRate>0</updateRate>
           <cameraName>tof</cameraName>
@@ -164,17 +163,18 @@
   </gazebo>
 
   <!-- camera -->
-  <gazebo reference="camera">
+  <gazebo reference="stereo_camera">
     <material>Gazebo/FlatBlack</material>
-    <sensor type="camera" name="camera">
+    <sensor type="multicamera" name="stereo_camera">
       <update_rate>25</update_rate>
       <visualize>${v_camera}</visualize>
-      <camera name="head_camera">
+      <camera name="left_camera">
+        <pose>0 0.035 0 0 0 0</pose>
         <horizontal_fov>1.692</horizontal_fov> <!-- 97 degree -->
         <image>
           <width>640</width>
           <height>480</height>
-          <format>R8G8B8</format> <!-- need to be gray -->
+          <format>R8G8B8</format>
         </image>
         <clip>
           <near>0.1</near>
@@ -186,13 +186,32 @@
           <stddev>0.007</stddev>
         </noise>
       </camera>
-      <plugin name="camera_controller" filename="libgazebo_ros_HTcamera.so">
+      <camera name="right_camera">
+        <pose>0 -0.035 0 0 0 0</pose>
+        <horizontal_fov>1.692</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.1</near>
+          <far>10</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>0</updateRate>
-        <cameraName>camera</cameraName>
+        <cameraName>stereo_camera</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-        <frameName>camera</frameName>
+        <frameName>left_camera</frameName>
+        <rightFrameName>right_camera</rightFrameName>
         <hackBaseline>0.07</hackBaseline>
         <distortionK1>0.0</distortionK1>
         <distortionK2>0.0</distortionK2>

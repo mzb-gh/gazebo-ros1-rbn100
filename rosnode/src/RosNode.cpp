@@ -30,7 +30,9 @@ public:
     void onLoaded() override
     {
         std::thread([this](){
-            ros::spin();
+            // ros::spin();
+            ros::MultiThreadedSpinner mSpinner(6);
+            mSpinner.spin();
         }).detach();
         LOG(INFO) << "start spin thread" << std::endl;
     }

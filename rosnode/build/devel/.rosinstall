@@ -1,2 +1,2 @@
 - setup-file:
-    local-name: /home/mzb/work/sim/rosnode/build/devel/setup.sh
+    local-name: /home/mzb/work/sim/rbn100_sim_ws/rosnode/build/devel/setup.sh

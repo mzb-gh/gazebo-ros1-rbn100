@@ -463,7 +463,7 @@
     type="fixed">
     <origin
       xyz="0.209 -0.0011166 0.3104"
-      rpy="0 0.54803 0" />
+      rpy="0 0.54803 0" />  <!-- 0.54803-->>
     <parent
       link="base_link" />
     <child
@@ -474,7 +474,7 @@
   
   <!-- camera -->
   <link
-    name="camera">
+    name="stereo_camera">
     <inertial>
       <origin
         xyz="0 0 0"
@@ -520,7 +520,7 @@
     <parent
       link="base_link" />
     <child
-      link="camera" />
+      link="stereo_camera" />
     <axis
       xyz="0 0 0" />
   </joint>
