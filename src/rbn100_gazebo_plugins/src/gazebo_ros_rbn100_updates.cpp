@@ -208,6 +208,8 @@ void GazeboRosRbn100::updateIMU()
  */
 void GazeboRosRbn100::updateCliffSensor()
 {
+  cliff_event_.header.frame_id = "cliff";
+  cliff_event_.header.stamp = ros::Time::now();
   // FL cliff sensor
   if ((cliff_detected_FL_ == false) &&
       (cliff_sensor_FL_->Range(0) >= cliff_detection_threshold_))
@@ -403,7 +405,8 @@ void GazeboRosRbn100::updateBumper()
     bumper_was_pressed_ = true;
     bumper_event_.state = rbn100_msgs::BumperEvent::PRESSED;
     bumper_event_.bumper = rbn100_msgs::BumperEvent::body;
-    bumper_event_.stamp = ros::Time::now();
+    bumper_event_.header.frame_id = bumper_name_;
+    bumper_event_.header.stamp = ros::Time::now();
     bumper_event_pub_.publish(bumper_event_);
   }
   else if (!bumper_is_pressed_ && bumper_was_pressed_)
@@ -412,7 +415,8 @@ void GazeboRosRbn100::updateBumper()
     bumper_was_pressed_ = false;
     bumper_event_.state = rbn100_msgs::BumperEvent::RELEASED;
     bumper_event_.bumper = rbn100_msgs::BumperEvent::body;
-    bumper_event_.stamp = ros::Time::now();
+    bumper_event_.header.frame_id = bumper_name_;
+    bumper_event_.header.stamp = ros::Time::now();
     bumper_event_pub_.publish(bumper_event_);
   }
 }

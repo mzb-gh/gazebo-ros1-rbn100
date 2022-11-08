@@ -60,6 +60,24 @@ ros/message_operations.h
 std_msgs/Header.h
 -
 
+../../devel/include/rbn100_msgs/StereoImage.h
+string
+-
+vector
+-
+map
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+std_msgs/Header.h
+-
+
 ../../devel/include/rbn100_msgs/Ultra.h
 string
 -
@@ -90,6 +108,16 @@ cstdint
 cstdint
 -
 
+../include/msg/sensor/ImgMsg.h
+cstdint
+-
+memory
+-
+opencv2/core.hpp
+-
+opencv2/opencv.hpp
+-
+
 ../include/msg/sensor/ImuMsg.h
 cstdint
 -
@@ -110,7 +138,7 @@ vector
 cstdint
 -
 
-/home/mzb/work/sim/rbn100_sim_ws/rosnode/src/RosSubscriberNode.cpp
+/home/mzb/work/sim/rbn100_sim_ws/rosnode/src/RosSimSensorNode.cpp
 mind_os/mind_os.h
 -
 ros/ros.h
@@ -123,8 +151,8 @@ rbn100_msgs/BumperEvent.h
 /home/mzb/work/sim/rbn100_sim_ws/rosnode/src/rbn100_msgs/BumperEvent.h
 sensor_msgs/LaserScan.h
 -
-sensor_msgs/Image.h
--
+rbn100_msgs/StereoImage.h
+/home/mzb/work/sim/rbn100_sim_ws/rosnode/src/rbn100_msgs/StereoImage.h
 cv_bridge/cv_bridge.h
 -
 sensor_msgs/image_encodings.h
@@ -151,6 +179,8 @@ msg/sensor/BumperEvent.h
 /home/mzb/work/sim/rbn100_sim_ws/rosnode/src/msg/sensor/BumperEvent.h
 msg/sensor/LaserScan.h
 /home/mzb/work/sim/rbn100_sim_ws/rosnode/src/msg/sensor/LaserScan.h
+msg/sensor/ImgMsg.h
+/home/mzb/work/sim/rbn100_sim_ws/rosnode/src/msg/sensor/ImgMsg.h
 msg/sensor/TofDepthData.h
 /home/mzb/work/sim/rbn100_sim_ws/rosnode/src/msg/sensor/TofDepthData.h
 msg/sensor/EncoderMsg.h

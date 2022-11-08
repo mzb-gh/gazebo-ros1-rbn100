@@ -41,8 +41,8 @@ target_link_libraries(ros_plugin
                       mind_os
                       ${catkin_LIBRARIES})
 
-add_library(ros_subscriber_plugin SHARED src/RosSubscriberNode.cpp)
-target_link_libraries(ros_subscriber_plugin
+add_library(ros_SimSensor_plugin SHARED src/RosSimSensorNode.cpp)
+target_link_libraries(ros_SimSensor_plugin
                       pthread
                       boost_system
                       glog

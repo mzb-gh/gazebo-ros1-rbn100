@@ -2,7 +2,7 @@
 
 <robot name="rbn100_chassis" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:property name="v_lidar" value="false" />
-  <xacro:property name="v_tof" value="true" />
+  <xacro:property name="v_tof" value="false" />
   <xacro:property name="v_camera" value="false" />
   <xacro:property name="v_sonar" value="false" />
   <xacro:property name="v_cliff" value="false" />
@@ -124,7 +124,7 @@
         <image>
             <width>224</width>
             <height>172</height>
-            <format>R8G8B8</format>
+            <format>L8</format>
         </image>
         <clip>
             <!-- 相机可视范围 -->
@@ -133,31 +133,32 @@
         </clip>
       </camera>
       <plugin name="tof_controller" filename="libgazebo_ros_HTopenni_kinect.so">
-          <baseline>0.1</baseline>
-          <!-- keep zero,parent tag sensor will control frame rate -->
-          <updateRate>0</updateRate>
-          <cameraName>tof</cameraName>
           <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-          <depthImageTopicName>depth/image_raw</depthImageTopicName>
-          <depthImageInfoTopicName>depth/camera_info</depthImageInfoTopicName>
-          <pointCloudTopicName>depth/points</pointCloudTopicName>
+          <cameraName>tof</cameraName>
           <frameName>kinect</frameName>
+          <!-- keep zero,parent tag sensor will control frame rate -->
+          <updateRate>0</updateRate>
+          <pointCloudTopicName>points</pointCloudTopicName>
+          <depthImageTopicName>depth/image_raw</depthImageTopicName>
+          <depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName>
           <!-- 点云工作范围，在父标签基础上的附加限制 -->
           <pointCloudCutoff>0.2</pointCloudCutoff>
           <pointCloudCutoffMax>5</pointCloudCutoffMax>
+          <!-- 默认深度数据32fc1编码 -->
+          <useDepth16UC1Format>false</useDepth16UC1Format>
           <!-- 畸变系数 -->
           <distortionK1>0.00000001</distortionK1>
           <distortionK2>0.00000001</distortionK2>
           <distortionK3>0.00000001</distortionK3>
           <distortionT1>0.00000001</distortionT1>
           <distortionT2>0.00000001</distortionT2>
-          <!-- 下面这些一般是0 -->
           <CxPrime>0</CxPrime>
           <Cx>0</Cx>
           <Cy>0</Cy>
-          <focalLength>0</focalLength>
           <hackBaseline>0</hackBaseline>
+          <focalLength>0</focalLength>
+          <borderCrop>true</borderCrop>
       </plugin>
     </sensor>
   </gazebo>
@@ -174,7 +175,7 @@
         <image>
           <width>640</width>
           <height>480</height>
-          <format>R8G8B8</format>
+          <format>L8</format>
         </image>
         <clip>
           <near>0.1</near>
@@ -192,7 +193,7 @@
         <image>
           <width>640</width>
           <height>480</height>
-          <format>R8G8B8</format>
+          <format>L8</format>
         </image>
         <clip>
           <near>0.1</near>
@@ -205,19 +206,23 @@
         </noise>
       </camera>
       <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
-        <alwaysOn>true</alwaysOn>
-        <updateRate>0</updateRate>
-        <cameraName>stereo_camera</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <cameraName>stereo_camera</cameraName>
         <frameName>left_camera</frameName>
         <rightFrameName>right_camera</rightFrameName>
-        <hackBaseline>0.07</hackBaseline>
+        <updateRate>0</updateRate>
         <distortionK1>0.0</distortionK1>
         <distortionK2>0.0</distortionK2>
         <distortionK3>0.0</distortionK3>
         <distortionT1>0.0</distortionT1>
         <distortionT2>0.0</distortionT2>
+        <CxPrime>0</CxPrime>
+        <Cx>0</Cx>
+        <Cy>0</Cy>
+        <focalLength>0</focalLength>
+        <hackBaseline>0.07</hackBaseline>
+        <borderCrop>true</borderCrop>
       </plugin>
     </sensor>
   </gazebo>

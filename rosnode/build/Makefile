@@ -168,6 +168,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named ros_SimSensor_plugin
+
+# Build rule for target.
+ros_SimSensor_plugin: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 ros_SimSensor_plugin
+.PHONY : ros_SimSensor_plugin
+
+# fast build rule for target.
+ros_SimSensor_plugin/fast:
+	$(MAKE) -f CMakeFiles/ros_SimSensor_plugin.dir/build.make CMakeFiles/ros_SimSensor_plugin.dir/build
+.PHONY : ros_SimSensor_plugin/fast
+
+#=============================================================================
 # Target rules for targets named pcl_msgs_generate_messages_py
 
 # Build rule for target.
@@ -922,19 +935,6 @@ rosgraph_msgs_generate_messages_eus/fast:
 .PHONY : rosgraph_msgs_generate_messages_eus/fast
 
 #=============================================================================
-# Target rules for targets named ros_subscriber_plugin
-
-# Build rule for target.
-ros_subscriber_plugin: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 ros_subscriber_plugin
-.PHONY : ros_subscriber_plugin
-
-# fast build rule for target.
-ros_subscriber_plugin/fast:
-	$(MAKE) -f CMakeFiles/ros_subscriber_plugin.dir/build.make CMakeFiles/ros_subscriber_plugin.dir/build
-.PHONY : ros_subscriber_plugin/fast
-
-#=============================================================================
 # Target rules for targets named tf_generate_messages_eus
 
 # Build rule for target.
@@ -1117,32 +1117,32 @@ src/RosNode.cpp.s:
 	$(MAKE) -f CMakeFiles/ros_plugin.dir/build.make CMakeFiles/ros_plugin.dir/src/RosNode.cpp.s
 .PHONY : src/RosNode.cpp.s
 
-src/RosSubscriberNode.o: src/RosSubscriberNode.cpp.o
+src/RosSimSensorNode.o: src/RosSimSensorNode.cpp.o
 
-.PHONY : src/RosSubscriberNode.o
+.PHONY : src/RosSimSensorNode.o
 
 # target to build an object file
-src/RosSubscriberNode.cpp.o:
-	$(MAKE) -f CMakeFiles/ros_subscriber_plugin.dir/build.make CMakeFiles/ros_subscriber_plugin.dir/src/RosSubscriberNode.cpp.o
-.PHONY : src/RosSubscriberNode.cpp.o
+src/RosSimSensorNode.cpp.o:
+	$(MAKE) -f CMakeFiles/ros_SimSensor_plugin.dir/build.make CMakeFiles/ros_SimSensor_plugin.dir/src/RosSimSensorNode.cpp.o
+.PHONY : src/RosSimSensorNode.cpp.o
 
-src/RosSubscriberNode.i: src/RosSubscriberNode.cpp.i
+src/RosSimSensorNode.i: src/RosSimSensorNode.cpp.i
 
-.PHONY : src/RosSubscriberNode.i
+.PHONY : src/RosSimSensorNode.i
 
 # target to preprocess a source file
-src/RosSubscriberNode.cpp.i:
-	$(MAKE) -f CMakeFiles/ros_subscriber_plugin.dir/build.make CMakeFiles/ros_subscriber_plugin.dir/src/RosSubscriberNode.cpp.i
-.PHONY : src/RosSubscriberNode.cpp.i
+src/RosSimSensorNode.cpp.i:
+	$(MAKE) -f CMakeFiles/ros_SimSensor_plugin.dir/build.make CMakeFiles/ros_SimSensor_plugin.dir/src/RosSimSensorNode.cpp.i
+.PHONY : src/RosSimSensorNode.cpp.i
 
-src/RosSubscriberNode.s: src/RosSubscriberNode.cpp.s
+src/RosSimSensorNode.s: src/RosSimSensorNode.cpp.s
 
-.PHONY : src/RosSubscriberNode.s
+.PHONY : src/RosSimSensorNode.s
 
 # target to generate assembly for a file
-src/RosSubscriberNode.cpp.s:
-	$(MAKE) -f CMakeFiles/ros_subscriber_plugin.dir/build.make CMakeFiles/ros_subscriber_plugin.dir/src/RosSubscriberNode.cpp.s
-.PHONY : src/RosSubscriberNode.cpp.s
+src/RosSimSensorNode.cpp.s:
+	$(MAKE) -f CMakeFiles/ros_SimSensor_plugin.dir/build.make CMakeFiles/ros_SimSensor_plugin.dir/src/RosSimSensorNode.cpp.s
+.PHONY : src/RosSimSensorNode.cpp.s
 
 # Help Target
 help:
@@ -1151,6 +1151,7 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... list_install_components"
+	@echo "... ros_SimSensor_plugin"
 	@echo "... pcl_msgs_generate_messages_py"
 	@echo "... pcl_msgs_generate_messages_nodejs"
 	@echo "... ros_plugin"
@@ -1213,7 +1214,6 @@ help:
 	@echo "... roscpp_generate_messages_eus"
 	@echo "... rosgraph_msgs_generate_messages_cpp"
 	@echo "... rosgraph_msgs_generate_messages_eus"
-	@echo "... ros_subscriber_plugin"
 	@echo "... tf_generate_messages_eus"
 	@echo "... rosgraph_msgs_generate_messages_lisp"
 	@echo "... install/local"
@@ -1231,9 +1231,9 @@ help:
 	@echo "... src/RosNode.o"
 	@echo "... src/RosNode.i"
 	@echo "... src/RosNode.s"
-	@echo "... src/RosSubscriberNode.o"
-	@echo "... src/RosSubscriberNode.i"
-	@echo "... src/RosSubscriberNode.s"
+	@echo "... src/RosSimSensorNode.o"
+	@echo "... src/RosSimSensorNode.i"
+	@echo "... src/RosSimSensorNode.s"
 .PHONY : help
 
 
