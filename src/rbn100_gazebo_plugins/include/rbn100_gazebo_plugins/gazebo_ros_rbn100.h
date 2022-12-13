@@ -19,18 +19,22 @@
 #endif
 #include <gazebo/physics/physics.hh>
 #include <gazebo/sensors/sensors.hh>
+#include <gazebo/rendering/Camera.hh>
 #include <gazebo/plugins/RayPlugin.hh>
 #include <gazebo_plugins/gazebo_ros_utils.h>
 #include <ros/ros.h>
-#include <std_msgs/Bool.h>  //for cliff and bumper control
+#include <std_msgs/Bool.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/Range.h>
+#include <sensor_msgs/fill_image.h>
+#include <sensor_msgs/distortion_models.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <image_transport/image_transport.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/LinearMath/Quaternion.h>
 #include <rbn100_msgs/MotorPower.h>
@@ -38,6 +42,8 @@
 #include <rbn100_msgs/BumperEvent.h>
 #include <rbn100_msgs/Encoder.h>
 #include <rbn100_msgs/Ultra.h>
+#include <rbn100_msgs/StereoImage.h>
+#include <rbn100_msgs/WheelSpeed.h>
 
 namespace gazebo
 {
@@ -46,6 +52,7 @@ enum {LEFT= 0, RIGHT=1};
 #define ENCODER_N 5600
 #define PI 3.1415926
 #define SONAR_NUM 4
+#define ENABLE_PUBLIC_CAMERAS
 
 class GazeboRosRbn100 : public ModelPlugin
 {
@@ -59,6 +66,8 @@ public:
   /// Called by the world update start event
   // Called at every iteration end
   void OnUpdate();
+  void OnNewCameraFrameLeft();
+  void OnNewCameraFrameRight();
 
 private:
   /*
@@ -109,6 +118,8 @@ private:
   bool prepareUltra();
   // velocity timeout
   bool prepareVelocityCommand();
+  // obtain the object of cameras
+  bool prepareStereoCamera();
   //advertise or subscribe
   void setupRosApi(std::string& model_name);
   
@@ -122,6 +133,8 @@ private:
   void updateCliffSensor();
   void updateBumper();
   void updateUltra();
+  void updateStereoCamera();
+  void updateWheelSpeed();
   // void pubSensorState();
 
   double GaussianKernel(double mu, double sigma);
@@ -155,7 +168,7 @@ private:
   // (triggers the OnUpdate callback when event update event is received)
   event::ConnectionPtr update_connection_;
   /// rate control
-  // double update_rate_;
+  // double update_period_;
   /// Simulation time on previous update
   common::Time prev_update_time_;
   /// ROS subscriber for motor power commands
@@ -203,19 +216,13 @@ private:
   /// TF transform for the odom frame
   geometry_msgs::TransformStamped odom_tf_;
   /// Pointer to cliff sensor
-  sensors::RaySensorPtr cliff_sensor_FL_;
-  sensors::RaySensorPtr cliff_sensor_FR_;
-  sensors::RaySensorPtr cliff_sensor_BL_;
-  sensors::RaySensorPtr cliff_sensor_BR_;
+  sensors::RaySensorPtr cliff_sensor_FL_, cliff_sensor_FR_, cliff_sensor_BL_, cliff_sensor_BR_;
   /// ROS publisher for cliff detection events
   ros::Publisher cliff_event_pub_;
   /// rbn100 ROS message for cliff event
   rbn100_msgs::CliffEvent cliff_event_;
   /// Cliff event flag
-  bool cliff_detected_FL_;
-  bool cliff_detected_FR_;
-  bool cliff_detected_BL_;
-  bool cliff_detected_BR_;
+  bool cliff_detected_FL_, cliff_detected_FR_, cliff_detected_BL_, cliff_detected_BR_;
   /// measured distance in meter for detecting a cliff
   float cliff_detection_threshold_;
   
@@ -224,10 +231,7 @@ private:
   bool bumper_auto_stop_motor_flag;
   
   /// Pointer to sonar sensor
-  sensors::RaySensorPtr sonar_sensor_FL_;
-  sensors::RaySensorPtr sonar_sensor_front_;
-  sensors::RaySensorPtr sonar_sensor_FR_;
-  sensors::RaySensorPtr sonar_sensor_back_;
+  sensors::RaySensorPtr sonar_sensor_FL_, sonar_sensor_front_, sonar_sensor_FR_, sonar_sensor_back_;
   // ultra msg and pub
   rbn100_msgs::Ultra ultra_msg_;
   ros::Publisher ultra_pub_;
@@ -250,11 +254,11 @@ private:
   /// Pointer to IMU sensor model
   sensors::ImuSensorPtr imu_;
   /// Storage for the angular velocity reported by the IMU
-  #if GAZEBO_MAJOR_VERSION >= 9
+/*   #if GAZEBO_MAJOR_VERSION >= 9
     ignition::math::Vector3d vel_angular_;
   #else
     math::Vector3 vel_angular_;
-  #endif
+  #endif */
 
   /// ROS publisher for IMU data
   ros::Publisher imu_pub_;
@@ -274,20 +278,31 @@ private:
 
   int console_log_rate;
   
-  std::string odom_name_;
-  std::string bumper_name_;
-  std::string imu_name_;
+  std::string odom_name_, bumper_name_, imu_name_;
 
-  double update_rate_;
-  double imu_rate_;
-  double sonar_rate_;
+  double update_rate_, imu_rate_, sonar_rate_, camera_rate_;
+  double update_period_, imu_period_, sonar_period_, camera_period_;
 
-  common::Time rate_step_;
-  common::Time imu_step_;
-  common::Time sonar_step_;
+  common::Time rate_step_, imu_step_, sonar_step_, camera_step_;
 
   rbn100_msgs::Encoder odom_;
   double m_per_encoder_;
+
+  sensors::WideAngleCameraSensorPtr left_sensor_, right_sensor_;
+  rendering::CameraPtr leftCam_, rightCam_;
+  ros::Publisher stereo_image_pub_;
+  sensor_msgs::Image leftImg_msg_, rightImg_msg_;
+  std::string camera_left_name_, camera_right_name_;
+  event::ConnectionPtr newLeftImgFrameConn_, newRightImgFrameConn_;
+  #ifdef ENABLE_PUBLIC_CAMERAS
+    image_transport::ImageTransport *itnode_;
+    image_transport::CameraPublisher leftImg_pub_, rightImg_pub_;
+    std::string camera_left_topic_, camera_right_topic_,
+                camera_left_frame_, camera_right_frame_;
+  #endif
+
+  ros::Publisher wheel_speed_pub_;
+
 };
 
 } // namespace gazebo

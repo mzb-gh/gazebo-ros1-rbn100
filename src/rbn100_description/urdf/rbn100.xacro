@@ -8,127 +8,71 @@
     改变碰撞属性（如主轮的）为简单形状以防止摩擦不均导致小车不走直线
    -->
 
-   <!-- base_footprint -->
+  <!-- base_footprint -->
   <link name="base_footprint"/>
   <!-- base link -->
-  <link
-    name="base_link">
+  <link name="base_link">
     <inertial>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <mass
-        value="2.9657" />
-      <inertia
-        ixx="0.08368808"
-        ixy="-0.00029554"
-        ixz="0.0027089"
-        iyy="0.09677856"
-        iyz="0.00015188"
-        izz="0.13033017" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="2.9657" />
+      <inertia ixx="0.08368808" ixy="-0.00029554" ixz="0.0027089"
+                iyy="0.09677856" iyz="0.00015188"
+                izz="0.13033017" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://rbn100_description/meshes/base_link.dae" />
+        <mesh filename="package://rbn100_description/meshes/base_link.dae" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="1 1 1 1" />
+      <material name="">
+        <color rgba="1 1 1 1" />
       </material>
     </visual>
     <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://rbn100_description/meshes/base_link.dae" />
+        <mesh filename="package://rbn100_description/meshes/base_link.dae" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="fixed"
-    type="fixed">
-    <origin
-      xyz="0 0 0.117"
-      rpy="0 0 0" />
-    <parent
-      link="base_footprint" />
-    <child
-      link="base_link" />
-    <axis
-      xyz="0 0 0" />
+  <joint name="fixed" type="fixed">
+    <origin xyz="0 0 0.117" rpy="0 0 0" />
+    <parent link="base_footprint" />
+    <child link="base_link" />
+    <axis xyz="0 0 0" />
   </joint>
 
-  <!-- 
-    wheel
-   -->
-   <xacro:macro name="wheel" params="pos flag_y">
-    <link
-      name="${pos}_wheel">
+  <!-- wheel-->
+  <xacro:macro name="wheel" params="pos flag_y">
+    <link name="${pos}_wheel">
       <inertial>
-        <origin
-          xyz="-3.9818E-08 ${0.023375 * flag_y} -5.7134E-06"
-          rpy="-1.570796 0 0" />
-        <mass
-          value="1.0829" />
-        <inertia
-          ixx="0.0021"
-          ixy="0"
-          ixz="0"
-          iyy="0.0021"
-          iyz="0"
-          izz="0.0038" />
-        <!-- <inertia
-          ixx="0.0019547"
-          ixy="3.8126E-10"
-          ixz="1.7547E-09"
-          iyy="0.0033687"
-          iyz="-3.6374E-7"
-          izz="0.0019547" /> -->
+        <origin xyz="-3.9818E-08 ${0.023375 * flag_y} -5.7134E-06" rpy="-1.570796 0 0" />
+        <mass value="1.0829" />
+        <inertia ixx="0.0021" ixy="0" ixz="0"
+                 iyy="0.0021" iyz="0"
+                 izz="0.0038" />
       </inertial>
       <visual>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh
-            filename="package://rbn100_description/meshes/${pos}_wheel.dae" />
+          <mesh filename="package://rbn100_description/meshes/${pos}_wheel.dae" />
         </geometry>
-        <material
-          name="">
-          <color
-            rgba="0.2 0.2 0.2 1" />
+        <material name="">
+          <color rgba="0.2 0.2 0.2 1" />
         </material>
       </visual>
       <collision>
-        <origin
-          xyz="-3.9818E-08 ${0.023375 * flag_y} -5.7134E-06"
-          rpy="-1.570796 0 0" />
+        <origin xyz="-3.9818E-08 ${0.023375 * flag_y} -5.7134E-06" rpy="-1.570796 0 0" />
         <geometry>
           <cylinder radius="0.0845" length="0.045" />
-          <!-- <mesh
-            filename="package://rbn100_description/meshes/${pos}_wheel.dae" /> -->
         </geometry>
       </collision>
     </link>
-    <joint
-      name="${pos}_wheel_joint"
-      type="continuous">
-      <origin
-        xyz="0 ${0.13755 * flag_y} -0.0325"
-        rpy="0 0 0" />
-      <parent
-        link="base_link" />
-      <child
-        link="${pos}_wheel" />
-      <axis
-        xyz="0 1 0" />
+    <joint name="${pos}_wheel_joint" type="continuous">
+      <origin xyz="0 ${0.13755 * flag_y} -0.0325" rpy="0 0 0" />
+      <parent link="base_link" />
+      <child link="${pos}_wheel" />
+      <axis xyz="0 1 0" />
     </joint>
   </xacro:macro>
   <!-- left wheel -->
@@ -137,171 +81,107 @@
   <xacro:wheel pos="right" flag_y="-1"/>
 
   <!-- 两个结构的转动惯量相对位置不均匀，导致vertical自己缓慢转动，没有转动惯量部件不会转动 -->
-  <!-- 理论上，正确的惯性矩阵加上gazebo摩擦力等的设置，就可以很稳定 -->
   <!-- 
     universal
    -->
   <!-- actual universal-->
   <!-- <xacro:macro name="universal" params="pos flag_x flag_y" >
-    <link
-      name="vertical_${pos}">
+    <link name="vertical_${pos}">
       <inertial>
-        <origin
-          xyz="0 -5.0772E-06 0.039138"
-          rpy="0 0 0" />
-        <mass
-          value="0.0095091" />
-        <inertia
-          ixx="6.8701E-06"
-          ixy="-2.7128E-10"
-          ixz="1.4028E-13"
-          iyy="6.8546E-06"
-          iyz="4.7639E-14"
-          izz="1.8597E-07" />
+        <origin xyz="0 -5.0772E-06 0.039138" rpy="0 0 0" />
+        <mass value="0.0095091" />
+        <inertia ixx="6.8701E-06" ixy="-2.7128E-10" ixz="1.4028E-13"
+                 iyy="6.8546E-06" iyz="4.7639E-14"
+                 izz="1.8597E-07" />
       </inertial>
       <visual>
-        <origin
-          xyz="-0.021177 0 0"
-          rpy="0 0 0" />
+        <origin xyz="-0.021177 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh
-            filename="package://rbn100_description/meshes/vertical.dae" />
+          <mesh filename="package://rbn100_description/meshes/vertical.dae" />
         </geometry>
-        <material
-          name="">
-          <color
-            rgba="1 1 1 1" />
+        <material name="">
+          <color rgba="1 1 1 1" />
         </material>
       </visual>
       <collision>
-        <origin
-          xyz="-0.021177 0 0"
-          rpy="0 0 0" />
+        <origin xyz="-0.021177 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh
-            filename="package://rbn100_description/meshes/vertical.dae" />
+          <mesh filename="package://rbn100_description/meshes/vertical.dae" />
         </geometry>
       </collision>
     </link>
-    <joint
-      name="vertical_${pos}_joint"
-      type="continuous">
-      <origin
-        xyz="${0.15248 * flag_x} ${-0.125 * flag_y} -0.0795"
-        rpy="0 0 0" />
-      <parent
-        link="base_link" />
-      <child
-        link="vertical_${pos}" />
-      <axis
-        xyz="0 0 1" />
+    <joint name="vertical_${pos}_joint" type="continuous">
+      <origin xyz="${0.15248 * flag_x} ${-0.125 * flag_y} -0.0795" rpy="0 0 0" />
+      <parent link="base_link" />
+      <child link="vertical_${pos}" />
+      <axis xyz="0 0 1" />
     </joint>
-    <link
-      name="universal_${pos}">
+    <link name="universal_${pos}">
       <inertial>
-        <origin
-          xyz="4.3796E-08 -1.0791E-09 2.8229E-07"
-          rpy="0 0 0" />
-        <mass
-          value="0.075555" />
-        <inertia
-          ixx="3.1637E-05"
-          ixy="-4.9814E-11"
-          ixz="3.4396E-10"
-          iyy="6.0967E-05"
-          iyz="4.138E-11"
-          izz="3.1639E-05" />
+        <origin xyz="4.3796E-08 -1.0791E-09 2.8229E-07" rpy="0 0 0" />
+        <mass value="0.075555" />
+        <inertia ixx="3.1637E-05" ixy="-4.9814E-11" ixz="3.4396E-10"
+                 iyy="6.0967E-05" iyz="4.138E-11"
+                 izz="3.1639E-05" />
       </inertial>
       <visual>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh
-            filename="package://rbn100_description/meshes/universal.dae" />
+          <mesh filename="package://rbn100_description/meshes/universal.dae" />
         </geometry>
-        <material
-          name="">
-          <color
-            rgba="0.75686 0.73725 0.67451 1" />
+        <material name="">
+          <color rgba="0.75686 0.73725 0.67451 1" />
         </material>
       </visual>
       <collision>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh
-            filename="package://rbn100_description/meshes/universal.dae" />
+          <mesh filename="package://rbn100_description/meshes/universal.dae" />
         </geometry>
       </collision>
     </link>
-    <joint
-      name="universal_${pos}_joint"
-      type="continuous">
-      <origin
-        xyz="-0.021177 0 0" 
-        rpy="0 0 0" />
-      <parent
-        link="vertical_${pos}" />
-      <child
-        link="universal_${pos}" />
-      <axis
-        xyz="0 1 0" />
+    <joint name="universal_${pos}_joint" type="continuous">
+      <origin xyz="-0.021177 0 0"  rpy="0 0 0" />
+      <parent link="vertical_${pos}" />
+      <child link="universal_${pos}" />
+      <axis xyz="0 1 0" />
     </joint>
   </xacro:macro> -->
+
   <!-- sphere universal -->
+  <!-- 
+    fixed joint with very small friction for vehicle to stand right still,
+    and have very small effect on vehicle's move.
+   -->
   <xacro:macro name="universal" params="pos flag_x flag_y" >
-    <link
-      name="universal_${pos}">
+    <link name="universal_${pos}">
       <inertial>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
-        <mass
-          value="0.0095091" />
-        <inertia
-          ixx="5.34886875e-06"
-          ixy="0"
-          ixz="0"
-          iyy="5.34886875e-06"
-          iyz="0"
-          izz="5.34886875e-06" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.0095091" />
+        <inertia ixx="5.34886875e-06" ixy="0" ixz="0"
+                 iyy="5.34886875e-06" iyz="0"
+                 izz="5.34886875e-06" />
       </inertial>
       <visual>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <sphere radius="0.0375" />
         </geometry>
-        <material
-          name="">
-          <color
-            rgba="1 1 1 1" />
+        <material name="">
+          <color rgba="1 1 1 1" />
         </material>
       </visual>
       <collision>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <sphere radius="0.0375" />
         </geometry>
       </collision>
     </link>
-    <joint
-      name="universal_${pos}_joint"
-      type="continuous">
-      <origin
-        xyz="${0.15248 * flag_x} ${-0.125 * flag_y} -0.0795"
-        rpy="0 0 0" />
-      <parent
-        link="base_link" />
-      <child
-        link="universal_${pos}" />
-      <axis
-        xyz="1 1 0" />
+    <joint name="universal_${pos}_joint" type="fixed">
+      <origin xyz="${0.15248 * flag_x} ${-0.125 * flag_y} -0.0795" rpy="0 0 0" />
+      <parent link="base_link" />
+      <child link="universal_${pos}" />
     </joint>
   </xacro:macro>
   <xacro:universal pos="FR" flag_x="1" flag_y="1"/>
@@ -310,448 +190,222 @@
   <xacro:universal pos="BL" flag_x="-1" flag_y="-1"/>
 
   <!-- front caster -->
-  <link
-    name="front_caster">
+  <link name="front_caster">
     <inertial>
-      <origin
-        xyz="-2.77555756156289E-17 -5.80442675708945E-16 0"
-        rpy="0 0 0" />
-      <mass
-        value="0.0506581815391354" />
-      <inertia
-        ixx="1.3188E-05"
-        ixy="2.1816E-22"
-        ixz="1.5232E-36"
-        iyy="1.0765E-05"
-        iyz="-1.6921E-20"
-        izz="1.3188E-05" />
+      <origin xyz="-2.77555756156289E-17 -5.80442675708945E-16 0" rpy="0 0 0" />
+      <mass value="0.0506581815391354" />
+      <inertia ixx="1.3188E-05" ixy="2.1816E-22" ixz="1.5232E-36"
+               iyy="1.0765E-05" iyz="-1.6921E-20"
+               izz="1.3188E-05" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://rbn100_description/meshes/front_caster.dae" />
+        <mesh filename="package://rbn100_description/meshes/front_caster.dae" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="1 1 1 1" />
+      <material name="">
+        <color rgba="1 1 1 1" />
       </material>
     </visual>
     <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://rbn100_description/meshes/front_caster.dae" />
+        <mesh filename="package://rbn100_description/meshes/front_caster.dae" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="front_caster_joint"
-    type="continuous">
-    <origin
-      xyz="0.16 0 -0.083"
-      rpy="0 0 0" />
-    <parent
-      link="base_link" />
-    <child
-      link="front_caster" />
-    <axis
-      xyz="0 1 0" />
+  <joint name="front_caster_joint" type="continuous">
+    <origin xyz="0.16 0 -0.083" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="front_caster" />
+    <axis xyz="0 1 0" />
   </joint>
 
   <!-- back caster -->
-  <link
-    name="back_caster">
+  <link name="back_caster">
     <inertial>
-      <origin
-        xyz="2.7756E-17 -5.8981E-16 0"
-        rpy="0 0 0" />
-      <mass
-        value="0.0056549" />
-      <inertia
-        ixx="2.9759E-07"
-        ixy="-7.1138E-24"
-        ixz="-4.9678E-38"
-        iyy="4.5946E-07"
-        iyz="1.1303E-21"
-        izz="2.9759E-07" />
+      <origin xyz="2.7756E-17 -5.8981E-16 0" rpy="0 0 0" />
+      <mass value="0.0056549" />
+      <inertia ixx="2.9759E-07" ixy="-7.1138E-24" ixz="-4.9678E-38"
+               iyy="4.5946E-07" iyz="1.1303E-21"
+               izz="2.9759E-07" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://rbn100_description/meshes/back_caster.dae" />
+        <mesh filename="package://rbn100_description/meshes/back_caster.dae" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="1 1 1 1" />
+      <material name="">
+        <color rgba="1 1 1 1" />
       </material>
     </visual>
     <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://rbn100_description/meshes/back_caster.dae" />
+        <mesh filename="package://rbn100_description/meshes/back_caster.dae" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="back_caster_joint"
-    type="continuous">
-    <origin
-      xyz="-0.193 0 -0.0845"
-      rpy="0 0 0" />
-    <parent
-      link="base_link" />
-    <child
-      link="back_caster" />
-    <axis
-      xyz="0 1 0" />
+  <joint name="back_caster_joint" type="continuous">
+    <origin xyz="-0.193 0 -0.0845" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="back_caster" />
+    <axis xyz="0 1 0" />
   </joint>
 
   <!-- tof -->
-  <link
-    name="tof">
-    <inertial>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" /> 
-      <mass
-        value="0.0001" />
-      <inertia
-        ixx="1.0E-08"
-        ixy="0"
-        ixz="0"
-        iyy="1.0e-08"
-        iyz="0"
-        izz="1.0e-08" />
-    </inertial>
+  <joint name="tof_joint" type="fixed">
+    <origin xyz="0.209 -0.0011166 0.3104" rpy="0 0.54803 0" />
+    <parent link="base_link" />
+    <child link="tof_link" />
+  </joint>
+  <link name="tof_link">
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" /> 
+      <origin xyz="0 0 0" rpy="0 0 0" /> 
       <geometry>
         <box size="0.003 0.033 0.023"/>
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0 0 0 1" />
+      <material name="">
+        <color rgba="0 0 0 1" />
       </material>
     </visual>
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" /> 
-      <geometry>
-        <box size="0.003 0.033 0.023"/>
-      </geometry>
-    </collision>
   </link>
-  <joint
-    name="tof_joint"
-    type="fixed">
-    <origin
-      xyz="0.209 -0.0011166 0.3104"
-      rpy="0 0.54803 0" />  <!-- x: 0.209 p:0.54803-->>
-    <parent
-      link="base_link" />
-    <child
-      link="tof" />
-    <axis
-      xyz="0 0 0" />
-  </joint>
   
-  <!-- camera -->
-  <link
-    name="stereo_camera">
-    <inertial>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <mass
-        value="0.001" />
-      <inertia
-        ixx="1.0e-06"
-        ixy="0"
-        ixz="0"
-        iyy="1.0e-06"
-        iyz="0"
-        izz="1.0e-06" />
-    </inertial>
+  <!-- camera & imu -->
+  <!-- center -->
+  <joint name="stereo_camera_joint" type="fixed">
+    <origin xyz="0.18936 0 0.249" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="stereo_camera_link" />
+  </joint>
+  <link name="stereo_camera_link">
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0.01 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.0003 0.15 0.023"/>
+        <box size="0.02 0.15 0.023"/>
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0 0 0 1" />
+      <material name="">
+        <color rgba="0 0 0 1" />
       </material>
     </visual>
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <box size="0.0003 0.15 0.023"/>
-      </geometry>
-    </collision>
   </link>
-  <joint
-    name="camera_joint"
-    type="fixed">
-    <origin
-      xyz="0.21 0 0.249"
-      rpy="0 0 0" />
-    <parent
-      link="base_link" />
-    <child
-      link="stereo_camera" />
-    <axis
-      xyz="0 0 0" />
-  </joint>
+
+  <!-- camera -->
+  <xacro:macro name="camera" params="name pos">
+    <!-- body -->
+    <joint name="fisheye_${name}_joint" type="fixed">
+      <origin xyz="0 ${pos * 0.035} 0" rpy="0 0 0" />
+      <parent link="stereo_camera_link" />
+      <child link="fisheye_${name}_frame" />
+    </joint>
+    <link name="fisheye_${name}_frame" />
+    <!-- optical -->
+    <joint name="fisheye_${name}_optical_joint" type="fixed">
+      <origin xyz="0.02 0 0" rpy="0 0 0" />
+      <parent link="fisheye_${name}_frame" />
+      <child link="fisheye_${name}_optical_frame" />
+    </joint>
+    <link name="fisheye_${name}_optical_frame" />
+  </xacro:macro>
+  <xacro:camera name="left" pos="1" />
+  <xacro:camera name="right" pos="-1" />
 
   <!-- imu -->
-  <link name="imu"/>
-  <joint
-    name="imu_joint"
-    type="fixed">
-    <origin
-      xyz="0.18936 0 0.249"
-      rpy="0 0 0" />
-    <parent
-      link="base_link" />
-    <child
-      link="imu" />
-    <axis
-      xyz="0 0 0" />
+  <joint name="imu_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="stereo_camera_link" />
+    <child link="imu" />
   </joint>
+  <link name="imu"/>
 
   <!-- lidar -->
-  <link
-    name="lidar">
-    <inertial>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <mass
-        value="0.0609959662435191" />
-      <inertia
-        ixx="3.389990057499999e-05"
-        ixy="0"
-        ixz="0"
-        iyy="3.389990057499999e-05"
-        iyz="0"
-        izz="4.88e-05" />
-    </inertial>
+  <link name="lidar">
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <cylinder radius="0.02" length="0.04323" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0 0 0 1" />
+      <material name="">
+        <color rgba="0 0 0 1" />
       </material>
     </visual>
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <cylinder radius="0.01" length="0.04323" />
-      </geometry>
-    </collision>
   </link>
-  <joint
-    name="lidar_joint"
-    type="fixed">
-    <origin
-      xyz="0.16001 0 0.124673"
-      rpy="0 -0.0262 0" />
-    <parent
-      link="base_link" />
-    <child
-      link="lidar" />
-    <axis
-      xyz="0 0 0" />
+  <joint name="lidar_joint" type="fixed">
+    <origin xyz="0.16001 0 0.124673" rpy="0 -0.0262 0" />
+    <parent link="base_link" />
+    <child link="lidar" />
+    <axis xyz="0 0 0" />
   </joint>
 
   <!-- 
     sonar
    -->
    <xacro:macro name="sonar" params="pos">
-    <link
-      name="sonar_${pos}">
-      <inertial>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
-        <mass
-          value="0.001" />
-        <inertia
-          ixx="1.0e-06"
-          ixy="0"
-          ixz="0"
-          iyy="1.0e-06"
-          iyz="0"
-          izz="1.0e-06" />
-      </inertial>
+    <link name="sonar_${pos}">
       <visual>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <box size="0.0015 0.05 0.02"/>
         </geometry>
-        <material
-          name="">
-          <color
-            rgba="0 0 0 1" />
+        <material name="">
+          <color rgba="0 0 0 1" />
         </material>
       </visual>
-      <collision>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
-        <geometry>
-          <box size="0.0015 0.05 0.02"/>
-        </geometry>
-      </collision>
     </link>
    </xacro:macro>
    <!-- back -->
   <xacro:sonar pos="back"/>
-  <joint
-    name="back_sonar_joint"
-    type="fixed">
-    <origin
-      xyz="-0.233 0 0.063"
-      rpy="0 0 3.14" />
-    <parent
-      link="base_link" />
-    <child
-      link="sonar_back" />
-    <axis
-      xyz="0 0 0" />
+  <joint name="back_sonar_joint" type="fixed">
+    <origin xyz="-0.233 0 0.063" rpy="0 0 3.14" />
+    <parent link="base_link" />
+    <child link="sonar_back" />
+    <axis xyz="0 0 0" />
   </joint>
   <!-- front -->
   <xacro:sonar pos="front"/>
-  <joint
-    name="front_sonar_joint"
-    type="fixed">
-    <origin
-      xyz="0.2316 0 0.063"
-      rpy="0 0 0" />
-    <parent
-      link="base_link" />
-    <child
-      link="sonar_front" />
-    <axis
-      xyz="0 0 0" />
+  <joint name="front_sonar_joint" type="fixed">
+    <origin xyz="0.2316 0 0.063" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="sonar_front" />
+    <axis xyz="0 0 0" />
   </joint>
   <!-- FL -->
   <xacro:sonar pos="FL"/>
-  <joint
-    name="sonar_FL_joint"
-    type="fixed">
-    <origin
-      xyz="0.21648 0.17249 0.063"
-      rpy="0 0 0.628" />
-    <parent
-      link="base_link" />
-    <child
-      link="sonar_FL" />
-    <axis
-      xyz="0 0 0" />
+  <joint name="sonar_FL_joint" type="fixed">
+    <origin xyz="0.21648 0.17249 0.063" rpy="0 0 0.628" />
+    <parent link="base_link" />
+    <child link="sonar_FL" />
+    <axis xyz="0 0 0" />
   </joint>
   <!-- FR -->
   <xacro:sonar pos="FR"/>
-  <joint
-    name="sonar_FR_joint"
-    type="fixed">
-    <origin
-      xyz="0.21748 -0.17249 0.063"
-      rpy="0 0 -0.628" />
-    <parent
-      link="base_link" />
-    <child
-      link="sonar_FR" />
-    <axis
-      xyz="0 0 0" />
+  <joint name="sonar_FR_joint" type="fixed">
+    <origin xyz="0.21748 -0.17249 0.063" rpy="0 0 -0.628" />
+    <parent link="base_link" />
+    <child link="sonar_FR" />
+    <axis xyz="0 0 0" />
   </joint>
 
   <!-- 
     cliff
    -->
   <xacro:macro name="cliff" params="pos flag_x flag_y" >
-    <link
-      name="cliff_${pos}">
-      <inertial>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
-        <mass
-          value="0.001" />
-        <inertia
-          ixx="1.0e-06"
-          ixy="0"
-          ixz="0"
-          iyy="1.0e-06"
-          iyz="0"
-          izz="1.0e-06" />
-      </inertial>
+    <link name="cliff_${pos}">
       <visual>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <box size="0.0025 0.01 0.02"/>
         </geometry>
-        <material
-          name="">
-          <color
-            rgba="1 1 1 1" />
+        <material name="">
+          <color rgba="1 1 1 1" />
         </material>
       </visual>
-      <collision>
-        <origin
-          xyz="0 0 0"
-          rpy="0 0 0" />
-        <geometry>
-          <box size="0.0025 0.01 0.02"/>
-        </geometry>
-      </collision>
     </link>
-    <joint
-      name="cliff_${pos}_joint"
-      type="fixed">
-      <origin
-        xyz="${0.106 * flag_x} ${0.1865 * flag_y} -0.0609"
-        rpy="0 1.570796 0" />
-      <parent
-        link="base_link" />
-      <child
-        link="cliff_${pos}" />
-      <axis
-        xyz="0 0 0" />
+    <joint name="cliff_${pos}_joint" type="fixed">
+      <origin xyz="${0.106 * flag_x} ${0.1865 * flag_y} -0.0609" rpy="0 1.570796 0" />
+      <parent link="base_link" />
+      <child link="cliff_${pos}" />
+      <axis xyz="0 0 0" />
     </joint>
   </xacro:macro>
   <!-- FL -->
@@ -764,58 +418,35 @@
   <xacro:cliff pos="BR" flag_x="-1" flag_y="-1"/>
 
   <!-- bumper -->
-  <link
-    name="bumper">
+  <link name="bumper">
     <inertial>
-      <origin
-        xyz="0.094808 2.5935E-08 3.9562E-09"
-        rpy="0 0 0" />
-      <mass
-        value="0.046523" />
-      <inertia
-        ixx="0.0010114"
-        ixy="1.0666E-10"
-        ixz="1.1467E-11"
-        iyy="6.3521E-05"
-        iyz="-4.0455E-11"
-        izz="0.0010733" />
+      <origin xyz="0.094808 2.5935E-08 3.9562E-09" rpy="0 0 0" />
+      <mass value="0.046523" />
+      <inertia ixx="0.0010114" ixy="1.0666E-10" ixz="1.1467E-11"
+               iyy="6.3521E-05" iyz="-4.0455E-11"
+               izz="0.0010733" />
     </inertial>
     <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://rbn100_description/meshes/bumper.dae" />
+        <mesh filename="package://rbn100_description/meshes/bumper.dae" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.2 0.2 0.2 1" />
+      <material name="">
+        <color rgba="0.2 0.2 0.2 1" />
       </material>
     </visual>
     <collision name="bumper">
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://rbn100_description/meshes/bumper.dae" />
+        <mesh filename="package://rbn100_description/meshes/bumper.dae" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="bumper_joint"
-    type="fixed">
-    <origin
-      xyz="0.1115 0.001 -0.077"
-      rpy="0 0 0" />
-    <parent
-      link="base_link" />
-    <child
-      link="bumper" />
-    <axis
-      xyz="0 0 0" />
+  <joint name="bumper_joint" type="fixed">
+    <origin xyz="0.1115 0.001 -0.077" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="bumper" />
+    <axis xyz="0 0 0" />
   </joint>
 
   <!-- transmission, parsed by ros_control -->

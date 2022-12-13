@@ -4,13 +4,15 @@
     <arg name="world_name" value="$(find rbn100_gazebo)/worlds/hotel_elevator.world" />
     <arg name="debug" value="false" />
     <arg name="gui" value="true" />
-    <arg name="paused" value="true"/>
+    <arg name="paused" value="false"/>
     <!-- Notifies ROS to use published /clock topic for ROS time. -->
     <arg name="use_sim_time" value="true"/>
     <arg name="recording" value="false"/>
   </include>
   <!-- <node name="tf_footprint_base" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 base_link base_footprint" /> -->
-  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -model rbn100 -param robot_description -x -8 -y 10 -z 0.15 -R 0 -P 0 -Y -1.570796" output="screen" />
-  <!-- 转换urdf深度相机坐标系和kinect插件的坐标关系 -->
-  <node pkg="tf2_ros" type="static_transform_publisher" name="static_transform_publisher" args="0 0 0 -1.57 0 -1.57 /tof /kinect"/>
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -model rbn100 -param robot_description -x -8 -y -10 -z 0.001 -R 0 -P 0 -Y 1.570796" output="screen" />
+  <!-- 转换urdf坐标系和插件坐标关系 -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="static_transform_publisher" args="0 0 0 -1.57 0 -1.57 /tof_link /kinect" />
+  <!-- 读取关节状态信息，输出tf tree -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 </launch>

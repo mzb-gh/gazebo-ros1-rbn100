@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 
 <robot name="rbn100_chassis" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:property name="v_lidar" value="false" />
-  <xacro:property name="v_tof" value="false" />
   <xacro:property name="v_camera" value="false" />
   <xacro:property name="v_sonar" value="false" />
   <xacro:property name="v_cliff" value="false" />
@@ -11,17 +9,20 @@
    -->
   <gazebo reference="base_link">
     <material>Gazebo/Gold</material>
-    <mu1>0.3</mu1>
-    <mu2>0.3</mu2>
+    <mu1>0</mu1>
+    <mu2>0</mu2>
     <kp>1000000.0</kp>
     <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
   </gazebo>
 
+  <!-- wheel go: torque > friction > 0, 
+       gazebo probably has default torque -->
   <xacro:macro name="wheel_prop" params="pos" >
     <gazebo reference="${pos}_wheel">
       <material>Gazebo/Gray</material>
-      <mu1>0.54</mu1>
-      <mu2>0.54</mu2>
+      <mu1>1</mu1>
+      <mu2>1</mu2>
       <kp>1000000.0</kp>
       <kd>100.0</kd>
       <minDepth>0.001</minDepth>
@@ -31,31 +32,14 @@
   <xacro:wheel_prop pos="left" />
   <xacro:wheel_prop pos="right" />
 
-  <!-- <xacro:macro name="vertical_prop" params="pos" >
-    <gazebo reference="vertical_${pos}">
-      <mu1>0.1</mu1>
-      <mu2>0.1</mu2>
-      <kp>1000000.0</kp>
-      <kd>100.0</kd>
-      <minDepth>0.001</minDepth>
-      <maxVel>1.2</maxVel>
-      <material>Gazebo/Gold</material>
-    </gazebo>
-  </xacro:macro>
-  <xacro:vertical_prop pos="FL" />
-  <xacro:vertical_prop pos="FR" />
-  <xacro:vertical_prop pos="BL" />
-  <xacro:vertical_prop pos="BR" /> -->
-
   <xacro:macro name="universal_prop" params="pos" >
     <gazebo reference="universal_${pos}">
       <material>Gazebo/Gray</material>
-      <mu1>0.01</mu1>
-      <mu2>0.01</mu2>
+      <mu1>0.0003</mu1>
+      <mu2>0.0003</mu2>
       <kp>1000000.0</kp>
       <kd>100.0</kd>
       <minDepth>0.001</minDepth>
-      <maxVel>20</maxVel>
     </gazebo>
   </xacro:macro>
   <xacro:universal_prop pos="FL" />
@@ -65,8 +49,8 @@
 
   <xacro:macro name="caster_prop" params="pos" >
     <gazebo reference="${pos}_caster">
-      <mu1>0.01</mu1>
-      <mu2>0.01</mu2>
+      <mu1>0.1</mu1>
+      <mu2>0.1</mu2>
       <kp>1000000.0</kp>
       <kd>100.0</kd>
       <minDepth>0.001</minDepth>
@@ -77,14 +61,12 @@
   <xacro:caster_prop pos="front" />
   <xacro:caster_prop pos="back" />
 
-  <!-- 插件程序中修改数据时间为硬件时间 -->
-  <!-- 暂时没从传感器对象中获取频率和采样数，更改这些需要手动更改程序 -->
   <!-- lidar -->
   <gazebo reference="lidar">
     <material>Gazebo/FlatBlack</material>
     <sensor type="ray" name="lidar_sensor">
       <pose>0 0 0 0 0 0</pose>
-      <visualize>${v_lidar}</visualize>
+      <visualize>0</visualize>
       <update_rate>15</update_rate>
       <ray>
         <scan>
@@ -103,10 +85,10 @@
         <noise>
           <type>gaussian</type>
           <mean>0.0</mean>
-          <stddev>0.001</stddev>
+          <stddev>0.01</stddev>
         </noise>
       </ray>
-      <plugin name="lidar_controller" filename="libgazebo_ros_HTlaser.so">
+      <plugin name="lidar_controller" filename="libgazebo_ros_laser.so">
         <topicName>simscan</topicName>
         <frameName>lidar</frameName>
       </plugin>
@@ -114,12 +96,12 @@
   </gazebo>
 
   <!-- tof -->
-  <gazebo reference="tof">
+  <gazebo reference="tof_link">
     <material>Gazebo/FlatBlack</material>
-    <sensor type="depth" name="tof">
-      <update_rate>10.0</update_rate>
-      <visualize>${v_tof}</visualize>
-      <camera name="head_tof">
+    <sensor type="depth" name="kinect">
+      <update_rate>11.0</update_rate>
+      <visualize>1</visualize>
+      <camera>
         <horizontal_fov>1.047198</horizontal_fov> <!-- 60 degree -->
         <image>
             <width>224</width>
@@ -127,15 +109,15 @@
             <format>L8</format>
         </image>
         <clip>
-            <!-- 相机可视范围 -->
-            <near>0.2</near>
-            <far>5</far>
+            <near>0.01</near> <!-- can't be zero -->
+            <far>30</far>
         </clip>
       </camera>
-      <plugin name="tof_controller" filename="libgazebo_ros_HTopenni_kinect.so">
+      <plugin name="tof_controller" filename="libgazebo_ros_openni_kinect.so">
           <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>
           <cameraName>tof</cameraName>
+          <!-- 插件中坐标系名字 -->
           <frameName>kinect</frameName>
           <!-- keep zero,parent tag sensor will control frame rate -->
           <updateRate>0</updateRate>
@@ -163,69 +145,135 @@
     </sensor>
   </gazebo>
 
-  <!-- camera -->
-  <gazebo reference="stereo_camera">
-    <material>Gazebo/FlatBlack</material>
-    <sensor type="multicamera" name="stereo_camera">
-      <update_rate>25</update_rate>
-      <visualize>${v_camera}</visualize>
-      <camera name="left_camera">
-        <pose>0 0.035 0 0 0 0</pose>
-        <horizontal_fov>1.692</horizontal_fov> <!-- 97 degree -->
-        <image>
-          <width>640</width>
-          <height>480</height>
-          <format>L8</format>
-        </image>
-        <clip>
-          <near>0.1</near>
-          <far>10</far>
-        </clip>
-        <noise>
-          <type>gaussian</type>
-          <mean>0.0</mean>
-          <stddev>0.007</stddev>
-        </noise>
-      </camera>
-      <camera name="right_camera">
-        <pose>0 -0.035 0 0 0 0</pose>
-        <horizontal_fov>1.692</horizontal_fov>
-        <image>
-          <width>640</width>
-          <height>480</height>
-          <format>L8</format>
-        </image>
-        <clip>
-          <near>0.1</near>
-          <far>10</far>
-        </clip>
-        <noise>
-          <type>gaussian</type>
-          <mean>0.0</mean>
-          <stddev>0.007</stddev>
-        </noise>
-      </camera>
-      <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
-        <imageTopicName>image_raw</imageTopicName>
-        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-        <cameraName>stereo_camera</cameraName>
-        <frameName>left_camera</frameName>
-        <rightFrameName>right_camera</rightFrameName>
-        <updateRate>0</updateRate>
-        <distortionK1>0.0</distortionK1>
-        <distortionK2>0.0</distortionK2>
-        <distortionK3>0.0</distortionK3>
-        <distortionT1>0.0</distortionT1>
-        <distortionT2>0.0</distortionT2>
-        <CxPrime>0</CxPrime>
-        <Cx>0</Cx>
-        <Cy>0</Cy>
-        <focalLength>0</focalLength>
-        <hackBaseline>0.07</hackBaseline>
-        <borderCrop>true</borderCrop>
-      </plugin>
-    </sensor>
+  <!-- stereo fisheye camera -->
+  <!-- for circular image, twice as low as hfov -->
+  <!-- <cutoff_angle>0.846</cutoff_angle> -->
+  <!-- <type>custom</type>
+  <custom_function>
+      <c1>1</c1>
+      <c2>0.8</c2>
+      <f>1</f>
+      <fun>sin</fun>
+  </custom_function> -->
+  <gazebo reference="stereo_camera_link">
+      <material>Gazebo/FlatBlack</material>
+      <sensor name="fisheye_left_sensor" type="wideanglecamera">
+        <update_rate>25</update_rate>
+        <visualize>true</visualize>
+        <camera>
+          <pose>0.02 0.06 0 0 0 0</pose>
+          <horizontal_fov>1.693</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>400</height>
+            <format>L8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>30</far>
+          </clip>
+          <lens>
+            <!-- <type>equidistant</type> -->
+            <type>custom</type>
+            <custom_function>
+                <c1>1</c1>
+                <c2>0.8</c2>
+                <f>1</f>
+                <fun>sin</fun>
+            </custom_function>
+            <scale_to_hfov>true</scale_to_hfov>
+            <env_texture_size>1536</env_texture_size>
+          </lens>
+        </camera>
+      </sensor>
+      <sensor name="fisheye_right_sensor" type="wideanglecamera">
+        <update_rate>25</update_rate>
+        <visualize>true</visualize>
+        <camera>
+          <pose>0.02 -0.06 0 0 0 0</pose>
+          <horizontal_fov>1.693</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>400</height>
+            <format>L8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>30</far>
+          </clip>
+          <lens>
+            <type>custom</type>
+            <custom_function>
+                <c1>1</c1>
+                <c2>0.8</c2>
+                <f>1</f>
+                <fun>sin</fun>
+            </custom_function>
+            <scale_to_hfov>true</scale_to_hfov>
+            <env_texture_size>1536</env_texture_size>
+          </lens>
+        </camera>
+      </sensor>
   </gazebo>
+
+  <!-- normal camera(type:camera/multicamera) ,pinhole, blomb bob -->
+  <!-- <gazebo reference="stereo_camera_link">
+      <sensor name="camera" type="multicamera">
+        <update_rate>25</update_rate>
+        <visualize>true</visualize>
+        <camera  name="left_camera">
+          <pose>0 0.06 0 0 0 0</pose>
+          <horizontal_fov>1.692</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>400</height>
+            <format>L8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>100</far>
+          </clip>
+          <noise>
+              <type>gaussian</type>
+              <mean>0.0</mean>
+              <stddev>0.007</stddev>
+          </noise>
+        </camera>
+        <camera  name="right_camera">
+          <pose>0 -0.06 0 0 0 0</pose>
+          <horizontal_fov>1.692</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>400</height>
+            <format>L8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>100</far>
+          </clip>4
+          <noise>
+              <type>gaussian</type>
+              <mean>0.0</mean>
+              <stddev>0.007</stddev>
+          </noise>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_multicamera.so">
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <cameraName>stereo_camera</cameraName>
+          <frameName>stereo_camera_link</frameName>
+          <hackBaseline>0.12</hackBaseline>
+          <distortionK1>-0</distortionK1>
+          <distortionK2>0</distortionK2>
+          <distortionK3>-0</distortionK3>
+          <distortionT1>0</distortionT1>
+          <distortionT2>0</distortionT2>
+          <CxPrime>0</CxPrime>
+          <Cx>0</Cx>
+          <Cy>0</Cy>
+        </plugin>
+      </sensor>
+  </gazebo> -->
 
   <!-- 超声和cliff采样数和精度需要确认 -->
   <!-- sonar -->
@@ -257,7 +305,7 @@
             <resolution>0.001</resolution>
           </range>
         </ray>
-        <!-- <plugin filename="libgazebo_ros_HTrange.so" name="sonar_controller">
+        <!-- <plugin filename="libgazebo_ros_range.so" name="sonar_controller">
           <gaussianNoise>0.005</gaussianNoise>
           <topicName>sonar_${pos}</topicName>
           <frameName>sonar_${pos}</frameName>
@@ -301,7 +349,7 @@
             <resolution>0.005</resolution>
           </range>
         </ray>
-        <!-- <plugin filename="libgazebo_ros_HTrange.so" name="cliff_controller">
+        <!-- <plugin filename="libgazebo_ros_range.so" name="cliff_controller">
           <robotNamespace>/rbn100</robotNamespace>
           <frameName>cliff_${pos}</frameName>
           <topicName>cliff_${pos}</topicName>
@@ -331,7 +379,7 @@
          -->
         <collision>base_footprint_fixed_joint_lump__bumper_collision_2</collision>
       </contact>
-      <!-- <plugin filename="libgazebo_ros_HTbumper.so" name="bumper_controller">
+      <!-- <plugin filename="libgazebo_ros_bumper.so" name="bumper_controller">
         <alwaysOn>true</alwaysOn>
         <bumperTopicName>contact</bumperTopicName>
         <frameName>bumper</frameName>
@@ -343,25 +391,25 @@
       imu
    -->
   <!-- gazebo sensor plugin -->
-  <!-- <gazebo reference="imu">
+  <!-- sim rate has to be 1000Hz for good imu data -->
+  <gazebo reference="imu">
     <gravity>true</gravity>
     <sensor type="imu" name="imu">
+      <pose>0 0 0 0 0 0</pose>
       <always_on>true</always_on>
-      <update_rate>1000</update_rate>
-      <visualize>true</visualize>
-      <plugin name="imu_controller" filename="libgazebo_ros_HTimu_sensor.so">
-        <topicName>imu</topicName>
+      <update_rate>500</update_rate>
+      <plugin name="imu_controller" filename="libgazebo_ros_imu_sensor.so">
+        <topicName>camera/imu</topicName>
         <bodyName>imu</bodyName>
-        <updateRateHZ>100.0</updateRateHZ>
+        <frameName>imu</frameName>
+        <updateRateHZ>500</updateRateHZ>
         <gaussianNoise>0.00001</gaussianNoise>
         <xyzOffset>0 0 0</xyzOffset>
         <rpyOffset>0 0 0</rpyOffset>
-        <frameName>imu</frameName>
         <initialOrientationAsReference>false</initialOrientationAsReference>
       </plugin>
-      <pose>0 0 0 0 0 0</pose>
     </sensor>
-  </gazebo> -->
+  </gazebo>
 
   <!-- gazebo model plugin -->
   <!-- <gazebo>
@@ -376,7 +424,7 @@
   </gazebo> -->
 
   <!-- kuboki, find imu obj -->
-  <gazebo reference="imu">
+  <!-- <gazebo reference="imu">
     <sensor type="imu" name="imu">
       <update_rate>500</update_rate>
       <imu>
@@ -397,7 +445,7 @@
         </noise>
       </imu>
     </sensor>
-  </gazebo>
+  </gazebo> -->
 
   <!-- 
       control
@@ -409,7 +457,7 @@
     </plugin>
   </gazebo> -->
 
-  <!-- gazebo model plugin, diff drive -->
+  <!-- gazebo plugin(model), diff drive -->
   <!-- <gazebo>
     <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
         <rosDebugLevel>Debug</rosDebugLevel>
@@ -435,7 +483,11 @@
     </plugin>
   </gazebo> -->
 
-  <!-- gazebo model plugin, customize -->
+  <!-- <imageTopicName>image_raw</imageTopicName>
+  <cameraName>fisheye_cameras</cameraName>
+  <frameName>fisheye_cameras</frameName> -->
+
+  <!-- gazebo plugin(model), customize -->
   <gazebo>
     <plugin name="rbn100_controller" filename="libgazebo_ros_rbn100.so">
       <rosDebugLevel>Info</rosDebugLevel>
@@ -447,6 +499,7 @@
       <torque>5</torque>
       <!-- 按秒计算 -->
       <velocity_command_timeout>1</velocity_command_timeout> 
+      <!-- same to link name, for msg frame_id to construct tf tree -->
       <cliff_sensor_FL_name>cliff_FL</cliff_sensor_FL_name>
       <cliff_sensor_FR_name>cliff_FR</cliff_sensor_FR_name>
       <cliff_sensor_BL_name>cliff_BL</cliff_sensor_BL_name>
@@ -459,11 +512,21 @@
       <sonar_noise>0.005</sonar_noise>
       <odom_name>odom</odom_name>
       <bumper_name>bumper</bumper_name>
-      <imu_name>imu</imu_name>
-      <update_rate>50</update_rate>
+      <!-- <imu_name>imu</imu_name> -->
       <!-- sim rate has to be 1000Hz for good imu data -->
-      <imu_rate>500</imu_rate>
+      <!-- <imu_rate>500</imu_rate> -->
+      <update_rate>50</update_rate>
       <sonar_rate>10</sonar_rate>
+      <!-- stereo fisheye camera -->
+      <!-- name for gazebo to find sensor object -->
+      <camera_left_name>fisheye_left_sensor</camera_left_name>
+      <camera_right_name>fisheye_right_sensor</camera_right_name>
+      <!-- frame for tf tree -->
+      <camera_left_frame>fisheye_left_optical_frame</camera_left_frame>
+      <camera_right_frame>fisheye_right_optical_frame</camera_right_frame>
+      <camera_left_topic>fisheye_left/image_raw</camera_left_topic>
+      <camera_right_topic>fisheye_right/image_raw</camera_right_topic>
+      <camera_rate>25</camera_rate>
     </plugin>
   </gazebo>
 </robot>

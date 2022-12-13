@@ -33,6 +33,8 @@ include_directories(include
                     ${catkin_INCLUDE_DIRS}
                     ${GAZEBO_INCLUDE_DIRS})
 
+message(STATUS "--------catkin_INCLUDE_DIRS-----------: ${catkin_INCLUDE_DIRS}")
+
 # plugins
 add_library(gazebo_ros_rbn100 src/gazebo_ros_rbn100.cpp
                               src/gazebo_ros_rbn100_updates.cpp

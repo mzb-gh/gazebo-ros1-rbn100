@@ -1,12 +1,11 @@
 <launch>
   <!-- 修改包名后需要重新加载模型描述参数（注释掉再重新放开） -->
-  <!-- <param name="robot_description" textfile="$(find rbn100_description)/urdf/description.urdf" /> -->
   <param name="robot_description" command="$(find xacro)/xacro $(find rbn100_description)/urdf/rbn100.xacro" />
-  <!-- 从参数服务器读取模型描述信息，输出关节状态信息 -->
+  <!-- 从参数服务器读取模型描述信息，输出关节状态信息给rviz -->
   <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" />
   <!-- <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" /> -->
-  <!-- 读取关节状态信息，输出tf信息 -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <!-- need this for start rviz alone -->
+  <!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" /> -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbn100_description)/config/rviz.rviz" />
   <!-- <node pkg="arbotix_python" type="arbotix_driver" name="arbotix" output="screen"> -->
       <!-- 在name下设置参数 -->

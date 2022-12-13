@@ -1,5 +1,94 @@
 #include "rbn100_gazebo_plugins/gazebo_ros_rbn100.h"
 
+
+sensor_msgs::CameraInfo cameraInfoLeft(const sensor_msgs::Image &image,
+                                   float horizontal_fov) {
+  sensor_msgs::CameraInfo info_msg;
+
+  info_msg.header = image.header;
+  info_msg.distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
+  info_msg.height = image.height;
+  info_msg.width = image.width;
+
+  float focal = image.width / horizontal_fov;
+
+  info_msg.K[0] = 378.332247;
+  info_msg.K[2] = 320.818260;
+  info_msg.K[4] = 378.445198;
+  info_msg.K[5] = 198.263230;
+  info_msg.K[8] = 1;
+
+  info_msg.D.resize(5);
+  info_msg.D[0] = -0.294920;
+  info_msg.D[1] = 0.076752;
+  info_msg.D[2] = 0.001398;
+  info_msg.D[3] = -0.000121;
+
+  info_msg.R[0] = 0.999714;
+  info_msg.R[1] = -0.000584;
+  info_msg.R[2] = -0.023904;
+  info_msg.R[3] = 0.000537;
+  info_msg.R[4] = 0.999998;
+  info_msg.R[5] = -0.001981;
+  info_msg.R[6] = 0.023905;
+  info_msg.R[7] = 0.001967;
+  info_msg.R[8] = 0.999712;
+
+  info_msg.P[0] = 346.888892;
+  info_msg.P[2] = 344.434708;
+  info_msg.P[5] = 346.888892;
+  info_msg.P[6] = 200.464249;
+  info_msg.P[10] = 1;
+
+  //    info_msg.roi.do_rectify = true;
+
+  return info_msg;
+}
+sensor_msgs::CameraInfo cameraInfoRight(const sensor_msgs::Image &image,
+                                   float horizontal_fov) {
+  sensor_msgs::CameraInfo info_msg;
+
+  info_msg.header = image.header;
+  info_msg.distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
+  info_msg.height = image.height;
+  info_msg.width = image.width;
+
+  float focal = image.width / horizontal_fov;
+
+  info_msg.K[0] = 378.767104;
+  info_msg.K[2] = 316.847613;
+  info_msg.K[4] = 379.132544;
+  info_msg.K[5] = 199.721362;
+  info_msg.K[8] = 1;
+
+  info_msg.D.resize(5);
+  info_msg.D[0] = -0.295472;
+  info_msg.D[1] = 0.077876;
+  info_msg.D[2] = 0.000952;
+  info_msg.D[3] = -0.000338;
+
+  info_msg.R[0] = 0.999452;
+  info_msg.R[1] = -0.000464;
+  info_msg.R[2] = -0.033105;
+  info_msg.R[3] = 0.000529;
+  info_msg.R[4] = 0.999998;
+  info_msg.R[5] = 0.001966;
+  info_msg.R[6] = 0.033104;
+  info_msg.R[7] = -0.001982;
+  info_msg.R[8] = 0.999450;
+
+  info_msg.P[0] = 346.888892;
+  info_msg.P[2] = 344.434708;
+  // info_msg.P[3] = -41.011652;
+  info_msg.P[5] = 346.888892;
+  info_msg.P[6] = 200.464249;
+  info_msg.P[10] = 1;
+
+  //    info_msg.roi.do_rectify = true;
+
+  return info_msg;
+}
+
 namespace gazebo 
 {
 
@@ -9,7 +98,6 @@ namespace gazebo
  */
 void GazeboRosRbn100::propagateVelocityCommands()
 {
-  // .double从纳秒值得到妙
   if (((prev_update_time_ - last_cmd_vel_time_).Double() > cmd_vel_timeout_) || !motors_enabled_)
   {
     wheel_speed_cmd_[LEFT] = 0.0;
@@ -173,13 +261,15 @@ void GazeboRosRbn100::updateIMU()
   imu_msg_.orientation_covariance[8] = 0.05;
 
   #if GAZEBO_MAJOR_VERSION >= 9
-    imu_msg_.angular_velocity.x = vel_angular_.X();
-    imu_msg_.angular_velocity.y = vel_angular_.Y();
-    imu_msg_.angular_velocity.z = vel_angular_.Z();
+    ignition::math::Vector3d vel_angular = imu_->AngularVelocity();
+    imu_msg_.angular_velocity.x = vel_angular.X();
+    imu_msg_.angular_velocity.y = vel_angular.Y();
+    imu_msg_.angular_velocity.z = vel_angular.Z();
   #else
-    imu_msg_.angular_velocity.x = vel_angular_.x;
-    imu_msg_.angular_velocity.y = vel_angular_.y;
-    imu_msg_.angular_velocity.z = vel_angular_.z;
+    ignition::math::Vector3d vel_angular = imu_->AngularVelocity();
+    imu_msg_.angular_velocity.x = vel_angular.x;
+    imu_msg_.angular_velocity.y = vel_angular.y;
+    imu_msg_.angular_velocity.z = vel_angular.z;
   #endif
 
 
@@ -319,7 +409,7 @@ void GazeboRosRbn100::updateCliffSensor()
 
 void GazeboRosRbn100::updateUltra(){
   // set time to now
-  ultra_msg_.head.stamp = ros::Time::now();
+  ultra_msg_.header.stamp = ros::Time::now();
   // every iteration, init distance to max
   double range_FL, range_front, range_FR, range_back;
   range_FL = range_front = range_FR = range_back = sonar_sensor_front_->RangeMax();
@@ -419,6 +509,82 @@ void GazeboRosRbn100::updateBumper()
     bumper_event_.header.stamp = ros::Time::now();
     bumper_event_pub_.publish(bumper_event_);
   }
+}
+
+void GazeboRosRbn100::updateWheelSpeed(){
+  rbn100_msgs::WheelSpeed wheel_speed_msg;
+  wheel_speed_msg.timeStamp = ros::Time::now().toNSec();
+  wheel_speed_msg.leftSpeed = this->wheel_speed_cmd_[LEFT];
+  wheel_speed_msg.rightSpeed = this->wheel_speed_cmd_[RIGHT];
+  wheel_speed_pub_.publish(wheel_speed_msg);
+}
+
+void GazeboRosRbn100::OnNewCameraFrameLeft(){
+  common::Time current_time = this->world_->SimTime();
+  this->leftImg_msg_.header.stamp.sec = current_time.sec;
+  this->leftImg_msg_.header.stamp.nsec = current_time.nsec;
+
+  std::string format = sensor_msgs::image_encodings::MONO8;
+  this->leftImg_msg_.encoding = format;
+  int step = this->leftCam_->ImageDepth();
+  this->leftImg_msg_.step = step;
+  int height = this->leftCam_->ImageHeight();
+  int width = this->leftCam_->ImageWidth();
+  if(this->leftCam_->ImageFormat() != "L8")
+    ROS_ERROR_STREAM("other formats is not supported but L8, please contact the developer.");
+
+  sensor_msgs::fillImage(this->leftImg_msg_,
+                         format,
+                         height,
+                         width,
+                         step * width,
+                         reinterpret_cast<const void *>(this->leftCam_->ImageData()));
+  #ifdef ENABLE_PUBLIC_CAMERAS
+    this->leftImg_msg_.header.frame_id = this->camera_left_frame_;
+    auto camera_info_msg = cameraInfoLeft(this->leftImg_msg_, this->leftCam_->HFOV().Radian());
+    this->leftImg_pub_.publish(this->leftImg_msg_, camera_info_msg);
+    this->leftImg_msg_.data.clear();
+  #endif
+}
+
+void GazeboRosRbn100::OnNewCameraFrameRight(){
+  common::Time current_time = this->world_->SimTime();
+  this->rightImg_msg_.header.stamp.sec = current_time.sec;
+  this->rightImg_msg_.header.stamp.nsec = current_time.nsec;
+
+  std::string format = sensor_msgs::image_encodings::MONO8;
+  if(this->rightCam_->ImageFormat() != "L8")
+    ROS_ERROR_STREAM("other formats is not supported but L8, please contact the developer.");
+
+  sensor_msgs::fillImage(this->rightImg_msg_,
+                         format,
+                         this->rightCam_->ImageHeight(),
+                         this->rightCam_->ImageWidth(),
+                         this->rightCam_->ImageDepth() * this->rightCam_->ImageWidth(),
+                         reinterpret_cast<const void *>(this->rightCam_->ImageData()));
+  #ifdef ENABLE_PUBLIC_CAMERAS
+    this->rightImg_msg_.header.frame_id = this->camera_right_frame_;
+    auto camera_info_msg = cameraInfoRight(this->rightImg_msg_, this->rightCam_->HFOV().Radian());
+    this->rightImg_pub_.publish(rightImg_msg_, camera_info_msg);
+    this->rightImg_msg_.data.clear();
+  #endif
+}
+
+void GazeboRosRbn100::updateStereoCamera(){
+    rbn100_msgs::StereoImage cam_msg;
+    cam_msg.header.frame_id = "stereo_camera";
+    cam_msg.header.stamp = ros::Time::now();
+    cam_msg.width = this->leftImg_msg_.width;
+    cam_msg.height = this->leftImg_msg_.height;
+    cam_msg.encoding = this->leftImg_msg_.encoding;
+    cam_msg.bigendian = this->leftImg_msg_.is_bigendian;
+    cam_msg.step = this->leftImg_msg_.step;
+    int size = this->leftImg_msg_.step * this->leftImg_msg_.height;
+    cam_msg.left.resize(size);
+    cam_msg.right.resize(size);
+    memcpy(&cam_msg.left[0], &this->leftImg_msg_.data[0], size);
+    memcpy(&cam_msg.right[0], &this->rightImg_msg_.data[0], size);
+    stereo_image_pub_.publish(cam_msg);
 }
 
 /* 

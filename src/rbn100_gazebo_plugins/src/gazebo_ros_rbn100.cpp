@@ -1,7 +1,3 @@
-/* 
-  插件类实现主函数
- */
-
 #include <cmath>
 #include <cstring>
 #include <boost/bind.hpp>
@@ -23,21 +19,14 @@ namespace gazebo
 GazeboRosRbn100::GazeboRosRbn100() : shutdown_requested_(false)
 {
   // Initialize variables
-  wheel_speed_cmd_[LEFT] = 0.0;
-  wheel_speed_cmd_[RIGHT] = 0.0;
-  cliff_detected_FL_ = false;
-  cliff_detected_FR_ = false;
-  cliff_detected_BL_ = false;
-  cliff_detected_BR_ = false;
+  wheel_speed_cmd_[LEFT] = wheel_speed_cmd_[RIGHT] = 0.0;
+  cliff_detected_FL_ = cliff_detected_FR_ = cliff_detected_BL_ = cliff_detected_BR_ = false;
   bumper_was_pressed_ = false;
   motors_enabled_ = true;
-  bumper_auto_stop_motor_flag = false;
-  cliff_auto_stop_motor_flag = false;
+  bumper_auto_stop_motor_flag = cliff_auto_stop_motor_flag = false;
 
   console_log_rate = 1;
-  rate_step_ = 0;
-  imu_step_ = 0;
-  sonar_step_ = 0;
+  rate_step_ = imu_step_ = sonar_step_ = camera_step_ = common::Time(0);
 }
 
 // deconstructor
@@ -90,6 +79,8 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
   else
     update_rate_ = sdf_->GetElement("update_rate")->Get<double>();
 
+  this->update_period_ = 1.0 / this->update_rate_;
+
   // prepareMotorPower();
   preparePublishTf();
 
@@ -105,9 +96,11 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
     return;
   if(prepareBumper() == false)
     return;
-  if(prepareIMU() == false)
-    return;
+  // if(prepareIMU() == false)
+  //   return;
   if(prepareUltra() == false)
+    return;
+  if(prepareStereoCamera() == false)
     return;
 
   setupRosApi(model_name);
@@ -138,22 +131,31 @@ void GazeboRosRbn100::OnUpdate()
   imu_step_ += step_time;
   rate_step_ += step_time;
   sonar_step_ += step_time;
+  camera_step_ += step_time;
   
-  if(rate_step_.Double() >= (1.0 / update_rate_)){
+  if(rate_step_.Double() >= update_period_){
     updateOdometry(rate_step_);
     propagateVelocityCommands();
-    rate_step_ = 0;
+    updateWheelSpeed();
+    rate_step_ = common::Time(0);
   }
-  if(imu_step_.Double() >= (1.0 / imu_rate_)){
-    updateIMU();
-    imu_step_ = 0;
-  }
-  if(sonar_step_.Double() >= (1.0 / sonar_rate_)){
+  // if(imu_step_.Double() >= imu_period_){
+  //   updateIMU();
+  //   imu_step_ = common::Time(0);
+  // }
+  if(sonar_step_.Double() >= sonar_period_){
     updateUltra();
-    sonar_step_ = 0;
+    sonar_step_ = common::Time(0);
   }
+
+  if(camera_step_.Double() >= camera_period_){
+    updateStereoCamera();
+    camera_step_ = common::Time(0);
+  }
+
   updateBumper();
   updateCliffSensor();
+
   prev_update_time_ = time_now;
 }
 

@@ -37,6 +37,10 @@ bool GazeboRosRbn100::prepareJointState()
     ROS_ERROR_STREAM("prepareJointState: Couldn't find specified wheel joints in the model! [" << node_name_ <<"]");
     return false;
   }
+
+  // joints_[LEFT]->SetVelocity(0, 0.3);
+  // joints_[RIGHT]->SetVelocity(0, 0.3);
+
   joint_state_.header.frame_id = "Joint States";
   joint_state_.name.push_back(left_wheel_joint_name_);
   joint_state_.position.push_back(0);
@@ -284,8 +288,10 @@ bool GazeboRosRbn100::prepareIMU()
   }else
     imu_rate_ = sdf_->GetElement("imu_rate")->Get<double>();
 
+  this->imu_period_ = 1.0 / this->imu_rate_;
+
   imu_ = std::dynamic_pointer_cast<sensors::ImuSensor>(
-      sensors::get_sensor(world_->Name()+"::"+node_name_+"::base_footprint::"+imu_name_));
+      sensors::get_sensor(world_->Name()+"::"+node_name_+"::base_footprint::"+this->imu_name_));
   if (!imu_){
     ROS_ERROR_STREAM("Couldn't find the IMU in the model! [" << node_name_ <<"]");
     return false;
@@ -337,6 +343,7 @@ bool GazeboRosRbn100::prepareUltra(){
   }else{
     ROS_WARN_STREAM("Couldn't find sonar_rate element in model description, please check");
   }
+  this->sonar_period_ = 1.0 / this->sonar_rate_;
 
   // get sensor obj from model via sensor name
   sonar_sensor_FL_ = std::dynamic_pointer_cast<sensors::RaySensor>(
@@ -376,6 +383,172 @@ bool GazeboRosRbn100::prepareUltra(){
 
   return true;
 }
+
+bool GazeboRosRbn100::prepareStereoCamera(){
+  if(sdf_->HasElement("camera_left_name")){
+    this->camera_left_name_ = sdf_->GetElement("camera_left_name")->Get<std::string>();
+  }
+  else{
+    ROS_ERROR_STREAM("image: lack of camera_left_name element.");
+    return false;
+  }
+  if(sdf_->HasElement("camera_right_name")){
+    this->camera_right_name_ = sdf_->GetElement("camera_right_name")->Get<std::string>();
+  }
+  else{
+    ROS_ERROR_STREAM("image: lack of camera_right_name element.");
+    return false;
+  }
+  
+  #ifdef ENABLE_PUBLIC_CAMERAS
+    this->camera_left_topic_ = this->camera_right_topic_ = "";
+    if(sdf_->HasElement("camera_left_topic"))
+      this->camera_left_topic_ = sdf_->GetElement("camera_left_topic")->Get<std::string>();
+    if(sdf_->HasElement("camera_right_topic"))
+      this->camera_right_topic_ = sdf_->GetElement("camera_right_topic")->Get<std::string>();
+
+    if(sdf_->HasElement("camera_left_frame")){
+      this->camera_left_frame_ = sdf_->GetElement("camera_left_frame")->Get<std::string>();
+    }else{
+      ROS_ERROR_STREAM("image: lack of camera_left_frame element.");
+      return false;
+    }
+    if(sdf_->HasElement("camera_right_frame")){
+      this->camera_right_frame_ = sdf_->GetElement("camera_right_frame")->Get<std::string>();
+    }else{
+      ROS_ERROR_STREAM("image: lack of camera_right_frame element.");
+      return false;
+    }
+  #endif
+
+  if(sdf_->HasElement("camera_rate")){
+    this->camera_rate_ = sdf_->GetElement("camera_rate")->Get<double>();
+  }else{
+    ROS_INFO_STREAM("image: lack of camera_rate element, rate default to 25");
+    this->camera_rate_ = 25;
+  }
+  this->camera_period_ = 1.0 / this->camera_rate_;
+
+  sensors::SensorManager *smanager = sensors::SensorManager::Instance();
+  this->left_sensor_ = std::dynamic_pointer_cast<sensors::WideAngleCameraSensor>(
+    smanager->GetSensor(this->camera_left_name_));
+  this->right_sensor_ = std::dynamic_pointer_cast<sensors::WideAngleCameraSensor>(
+    smanager->GetSensor(this->camera_right_name_));
+
+  if (!this->left_sensor_) {
+    ROS_WARN_STREAM("RealSensePlugin: fisheeye Camera left has not been found");
+    return false;
+  }
+  if (!this->right_sensor_) {
+    ROS_WARN_STREAM("RealSensePlugin: fisheye Camera right has not been found");
+    return false;
+  }
+
+  this->left_sensor_->SetActive(true);
+  this->right_sensor_->SetActive(true);
+
+  this->leftCam_ = this->left_sensor_->Camera();
+  this->rightCam_ = this->right_sensor_->Camera();
+
+  this->newLeftImgFrameConn_ = this->leftCam_->ConnectNewImageFrame(std::bind(
+      &GazeboRosRbn100::OnNewCameraFrameLeft, this));
+  this->newRightImgFrameConn_ = this->rightCam_->ConnectNewImageFrame(std::bind(
+      &GazeboRosRbn100::OnNewCameraFrameRight, this));
+
+  return true;
+}
+
+void GazeboRosRbn100::setupRosApi(std::string& model_name)
+{
+  // std::string base_prefix;
+  // gazebo_ros_->node()->param("base_prefix", base_prefix, std::string("mobile_base"));
+  
+/* 
+  publisher（以指定频率往共享发布队列中发布数据，队列长度为1保证数据都是最新的）
+*/
+  // pub of joint_states
+  std::string joint_states_topic = "joint_states";
+  joint_state_pub_ = gazebo_ros_->node()->advertise<sensor_msgs::JointState>(joint_states_topic, 1);
+  ROS_INFO("%s: Advertise joint_states[%s]!", gazebo_ros_->info(), joint_states_topic.c_str());
+
+  // pub of odom
+  std::string odom_topic = odom_name_;
+  odom_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::Encoder>(odom_topic, 1);
+  ROS_INFO("%s: Advertise Odometry[%s]!", gazebo_ros_->info(), odom_topic.c_str());
+
+  // pub of cliff
+  std::string cliff_topic = "/events/cliff";
+  cliff_event_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::CliffEvent>(cliff_topic, 1);
+  ROS_INFO("%s: Advertise Cliff[%s]!", gazebo_ros_->info(), cliff_topic.c_str());
+
+  // pub of bumper
+  std::string bumper_topic = "/events/" + bumper_name_;
+  bumper_event_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::BumperEvent>(bumper_topic, 1);
+  ROS_INFO("%s: Advertise Bumper[%s]!", gazebo_ros_->info(), bumper_topic.c_str());
+
+  // pub of IMU
+  // std::string imu_topic = base_prefix + "/sensors/" + imu_name_;
+  // imu_pub_ = gazebo_ros_->node()->advertise<sensor_msgs::Imu>(imu_topic, 1);
+  // ROS_INFO("%s: Advertise IMU[%s]!", gazebo_ros_->info(), imu_topic.c_str());
+
+  // pub of ultra
+  std::string ultra_topic = "/simultra";
+  ultra_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::Ultra>(ultra_topic, 1);
+  ROS_INFO("%s: Advertise Ultra[%s]!", gazebo_ros_->info(), ultra_topic.c_str());
+
+  // pub of camera
+  #ifdef ENABLE_PUBLIC_CAMERAS
+    this->itnode_ = new image_transport::ImageTransport(*(this->gazebo_ros_->node()));
+    this->leftImg_pub_ = this->itnode_->advertiseCamera(this->camera_left_topic_, 1);
+    this->rightImg_pub_ = this->itnode_->advertiseCamera(this->camera_right_topic_, 1);
+    ROS_INFO("%s: Advertise Camera[%s]!", gazebo_ros_->info(), this->camera_left_topic_.c_str());
+    ROS_INFO("%s: Advertise Camera[%s]!", gazebo_ros_->info(), this->camera_right_topic_.c_str());
+  #endif
+  std::string camera_topic = "/camera/stereo_image";
+  this->stereo_image_pub_ = this->gazebo_ros_->node()->advertise<rbn100_msgs::StereoImage>(camera_topic, 1);
+  ROS_INFO("%s: Advertise Camera[%s]!", gazebo_ros_->info(), camera_topic.c_str());
+
+  std::string wheel_speed_topic = "/wheel_speed";
+  this->wheel_speed_pub_ = this->gazebo_ros_->node()->advertise<rbn100_msgs::WheelSpeed>(wheel_speed_topic, 1);
+  ROS_INFO("%s: Advertise WheelSpeed[%s]!", gazebo_ros_->info(), wheel_speed_topic.c_str());
+
+
+  // pub of motor power state
+  // std::string motor_power_state_topic = base_prefix + "/events/motor_power_state";
+  // motor_power_state_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::MotorPower>(motor_power_state_topic, 1);
+  // ROS_INFO("%s: Advertise MotorPower[%s]!", gazebo_ros_->info(), motor_power_state_topic.c_str());
+
+/* 
+  subscriber（从发布队列中取数据放入共享订阅队列供回调函数使用，没有订阅频率，快慢看机器，
+              回调函数尽量简短，以保证信息处理及时，spin和spinonce都是单线程顺序查看
+              队列中的所有信息，多线程可以分topic查看）
+*/
+  // sub of motor power
+  std::string motor_power_topic = "/commands/motor_power";
+  motor_power_sub_ = gazebo_ros_->node()->subscribe(motor_power_topic, 10, &GazeboRosRbn100::motorPowerCB, this);
+  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), motor_power_topic.c_str());
+
+  // sub of odom reset
+  std::string odom_reset_topic = "/commands/reset_odometry";
+  odom_reset_sub_ = gazebo_ros_->node()->subscribe(odom_reset_topic, 10, &GazeboRosRbn100::resetOdomCB, this);
+  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), odom_reset_topic.c_str());
+
+  // sub of cmd_vel
+  std::string cmd_vel_topic = "/commands/velocity";
+  cmd_vel_sub_ = gazebo_ros_->node()->subscribe(cmd_vel_topic, 100, &GazeboRosRbn100::cmdVelCB, this);
+  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), cmd_vel_topic.c_str());
+
+  // sub of enable bumper auto stop motor
+  std::string bumper_auto_stop_motor_topic = "/commands/bumper_auto_stop_motor";
+  bumper_auto_stop_motor_sub_ = gazebo_ros_->node()->subscribe(bumper_auto_stop_motor_topic, 10, &GazeboRosRbn100::bumperAutoStopMotorCB, this);
+  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), bumper_auto_stop_motor_topic.c_str());
+  
+  // sub of enable cliff auto stop motor
+  std::string cliff_auto_stop_motor_topic = "/commands/cliff_auto_stop_motor";
+  cliff_auto_stop_motor_sub_ = gazebo_ros_->node()->subscribe(cliff_auto_stop_motor_topic, 10, &GazeboRosRbn100::cliffAutoStopMotorCB, this);
+  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), cliff_auto_stop_motor_topic.c_str());
+}
+
 
 /* 
   call backs
@@ -418,7 +591,7 @@ void GazeboRosRbn100::cmdVelCB(const geometry_msgs::TwistConstPtr &msg)
     last_cmd_vel_time_ = world_->GetSimTime();
   #endif
 
-  // 线速度、角速度、轮间距和两轮速度的关系
+  // 小车线速度、角速度、轮间距和两轮速度的关系
   wheel_speed_cmd_[LEFT] = msg->linear.x - msg->angular.z * (wheel_sep_) / 2;
   wheel_speed_cmd_[RIGHT] = msg->linear.x + msg->angular.z * (wheel_sep_) / 2;
 }
@@ -435,78 +608,4 @@ void GazeboRosRbn100::cliffAutoStopMotorCB(const std_msgs::BoolPtr &msg)
    ROS_INFO_STREAM("Enable flag for cliff auto brake: "<< cliff_auto_stop_motor_flag);
 }
 
-void GazeboRosRbn100::setupRosApi(std::string& model_name)
-{
-  std::string base_prefix;
-  gazebo_ros_->node()->param("base_prefix", base_prefix, std::string("mobile_base"));
-  
-  /* 
-    publisher（以指定频率往共享发布队列中发布数据，队列长度为1保证数据都是最新的）
-   */
-  // pub of joint_states
-  std::string joint_states_topic = "joint_states";
-  joint_state_pub_ = gazebo_ros_->node()->advertise<sensor_msgs::JointState>(joint_states_topic, 1);
-  ROS_INFO("%s: Advertise joint_states[%s]!", gazebo_ros_->info(), joint_states_topic.c_str());
-
-  // pub of odom
-  std::string odom_topic = odom_name_;
-  // odom_pub_ = gazebo_ros_->node()->advertise<nav_msgs::Odometry>(odom_topic, 1);
-  odom_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::Encoder>(odom_topic, 1);
-  ROS_INFO("%s: Advertise Odometry[%s]!", gazebo_ros_->info(), odom_topic.c_str());
-
-  // pub of cliff
-  std::string cliff_topic = base_prefix + "/events/cliff";
-  cliff_event_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::CliffEvent>(cliff_topic, 1);
-  ROS_INFO("%s: Advertise Cliff[%s]!", gazebo_ros_->info(), cliff_topic.c_str());
-
-  // pub of bumper
-  std::string bumper_topic = base_prefix + "/events/" + bumper_name_;
-  bumper_event_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::BumperEvent>(bumper_topic, 1);
-  ROS_INFO("%s: Advertise Bumper[%s]!", gazebo_ros_->info(), bumper_topic.c_str());
-
-  // pub of IMU
-  std::string imu_topic = base_prefix + "/sensors/" + imu_name_;
-  imu_pub_ = gazebo_ros_->node()->advertise<sensor_msgs::Imu>(imu_topic, 1);
-  ROS_INFO("%s: Advertise IMU[%s]!", gazebo_ros_->info(), imu_topic.c_str());
-
-  // pub of ultra
-  std::string ultra_topic = base_prefix + "/sensors/ultra";
-  ultra_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::Ultra>(ultra_topic, 1);
-  ROS_INFO("%s: Advertise Ultra[%s]!", gazebo_ros_->info(), ultra_topic.c_str());
-
-  // pub of motor power state
-  // std::string motor_power_state_topic = base_prefix + "/events/motor_power_state";
-  // motor_power_state_pub_ = gazebo_ros_->node()->advertise<rbn100_msgs::MotorPower>(motor_power_state_topic, 1);
-  // ROS_INFO("%s: Advertise MotorPower[%s]!", gazebo_ros_->info(), motor_power_state_topic.c_str());
-
-  /* 
-    subscriber（从发布队列中取数据放入共享订阅队列供回调函数使用，没有订阅频率，快慢看机器，
-                回调函数尽量简短，以保证信息处理及时，spin和spinonce都是单线程顺序查看
-                队列中的所有信息，多线程可以分topic查看）
-   */
-  // sub of motor power
-  std::string motor_power_topic = base_prefix + "/commands/motor_power";
-  motor_power_sub_ = gazebo_ros_->node()->subscribe(motor_power_topic, 10, &GazeboRosRbn100::motorPowerCB, this);
-  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), motor_power_topic.c_str());
-
-  // sub of odom reset
-  std::string odom_reset_topic = base_prefix + "/commands/reset_odometry";
-  odom_reset_sub_ = gazebo_ros_->node()->subscribe(odom_reset_topic, 10, &GazeboRosRbn100::resetOdomCB, this);
-  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), odom_reset_topic.c_str());
-
-  // sub of cmd_vel
-  std::string cmd_vel_topic = base_prefix + "/commands/velocity";
-  cmd_vel_sub_ = gazebo_ros_->node()->subscribe(cmd_vel_topic, 100, &GazeboRosRbn100::cmdVelCB, this);
-  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), cmd_vel_topic.c_str());
-
-  // sub of enable bumper auto stop motor
-  std::string bumper_auto_stop_motor_topic = base_prefix + "/commands/bumper_auto_stop_motor";
-  bumper_auto_stop_motor_sub_ = gazebo_ros_->node()->subscribe(bumper_auto_stop_motor_topic, 10, &GazeboRosRbn100::bumperAutoStopMotorCB, this);
-  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), bumper_auto_stop_motor_topic.c_str());
-  
-  // sub of enable cliff auto stop motor
-  std::string cliff_auto_stop_motor_topic = base_prefix + "/commands/cliff_auto_stop_motor";
-  cliff_auto_stop_motor_sub_ = gazebo_ros_->node()->subscribe(cliff_auto_stop_motor_topic, 10, &GazeboRosRbn100::cliffAutoStopMotorCB, this);
-  ROS_INFO("%s: Try to subscribe to %s!", gazebo_ros_->info(), cliff_auto_stop_motor_topic.c_str());
-}
-}
+} // end of namespace gazebo
