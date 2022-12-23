@@ -1,11 +1,6 @@
-#include <cmath>
-#include <cstring>
-#include <boost/bind.hpp>
-#include <sensor_msgs/JointState.h>
-#include <tf/LinearMath/Quaternion.h>
 #include "rbn100_gazebo_plugins/gazebo_ros_rbn100.h"
+#include <tf/LinearMath/Quaternion.h>
 #if GAZEBO_MAJOR_VERSION >= 9
-  // #include <ignition/math.hh>
   #include <ignition/math/Vector3.hh>
   #include <ignition/math/Quaternion.hh>
 #else
@@ -16,47 +11,31 @@ namespace gazebo
 {
 
 // constructor
-GazeboRosRbn100::GazeboRosRbn100() : shutdown_requested_(false)
-{
-  // Initialize variables
-  wheel_speed_cmd_[LEFT] = wheel_speed_cmd_[RIGHT] = 0.0;
-  cliff_detected_FL_ = cliff_detected_FR_ = cliff_detected_BL_ = cliff_detected_BR_ = false;
-  bumper_was_pressed_ = false;
+GazeboRosRbn100::GazeboRosRbn100(){
   motors_enabled_ = true;
-  bumper_auto_stop_motor_flag = cliff_auto_stop_motor_flag = false;
-
-  console_log_rate = 1;
   rate_step_ = imu_step_ = sonar_step_ = camera_step_ = common::Time(0);
 }
 
 // deconstructor
-GazeboRosRbn100::~GazeboRosRbn100()
-{
-//  rosnode_->shutdown();
-  shutdown_requested_ = true;
-  // Wait for spinner thread to end
-//  ros_spinner_thread_->join();
+GazeboRosRbn100::~GazeboRosRbn100(){}
 
-  //  delete spinner_thread_;
-//  delete rosnode_;
-}
-
-void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
+void GazeboRosRbn100::Load(physics::ModelPtr model, sdf::ElementPtr sdf)
 {
-  model_ = parent;
-  std::string world_name = model_->GetWorld()->Name();
-  
-  if (!model_)
-  {
+  sdf_ = sdf;
+  std::string model_name = sdf_->GetParent()->Get<std::string>("name"); // why rbn100???
+  node_name_ = model_name;
+
+  model_ = model;
+  if (!model){
     ROS_ERROR_STREAM("Load: Invalid model pointer! [" << node_name_ << "]");
     return;
   }
 
-  gazebo_ros_ = GazeboRosPtr(new GazeboRos(model_, sdf, "rbn100"));
-  sdf_ = sdf;
-  // gazebo_ros_->getParameter(this->update_rate_, "update_rate", 0.0);
+  world_ = model_->GetWorld();
 
-  // Make sure the ROS node for Gazebo has already been initialized
+  // Gazebo ros helper class, simplifies the parameter and rosnode handling
+  GazeboRosPtr gazebo_ros = GazeboRosPtr(new GazeboRos(model, this->sdf_, "rbn100-sim"));
+
   if (!ros::isInitialized())
   {
     ROS_FATAL_STREAM("Load: A ROS node for Gazebo has not been initialized, unable to load plugin. "
@@ -64,26 +43,17 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
     return;
   }
 
-  // Get then name of the parent model and use it as node name
-  std::string model_name = sdf->GetParent()->Get<std::string>("name");
-  gzdbg << "Load: Plugin model name: " << model_name << "\n"; //rbn100
-  node_name_ = model_name;
-  world_ = parent->GetWorld();
-
-  if (!sdf_->HasElement("update_rate"))
+  double update_rate = 0;
+  if (!this->sdf_->HasElement("update_rate"))
   {
-    ROS_DEBUG_NAMED("sensor", "sensor plugin missing <update_rate>, defaults to 0.0"
+    ROS_DEBUG_NAMED("sensor", "sensor plugin missing <update_rate>, defaults to 0"
              " (as fast as possible)");
-    update_rate_ = 0.0;
+  }else{
+    update_rate = this->sdf_->Get<double>("update_rate");
   }
-  else
-    update_rate_ = sdf_->GetElement("update_rate")->Get<double>();
+  update_period_ = 1.0 / update_rate;
 
-  this->update_period_ = 1.0 / this->update_rate_;
-
-  // prepareMotorPower();
   preparePublishTf();
-
   if(prepareJointState() == false)
     return;
   if(prepareWheelAndTorque() == false)
@@ -103,58 +73,56 @@ void GazeboRosRbn100::Load(physics::ModelPtr parent, sdf::ElementPtr sdf)
   if(prepareStereoCamera() == false)
     return;
 
-  setupRosApi(model_name);
+  setupRosApi(gazebo_ros);
 
-  // prev_update_time_ = world_->SimTime();
-  prev_update_time_.Set(ros::Time::now().sec, ros::Time::now().nsec);
+  prev_update_time_ = world_->SimTime();
+  // prev_update_time_.Set(ros::Time::now().sec, ros::Time::now().nsec);
 
-  ROS_INFO_STREAM("GazeboRosRbn100 plugin ready to go! [" << node_name_ << "]");
+  ROS_INFO_STREAM("GazeboRosRbn100 plugin ready to go! [" << model_name << "]");
   // Listen to the update event. This event is broadcast every simulation iteration.
-  update_connection_ = event::Events::ConnectWorldUpdateEnd(
-      boost::bind(&GazeboRosRbn100::OnUpdate, this));
+  update_connection_ = event::Events::ConnectWorldUpdateEnd(std::bind(&GazeboRosRbn100::OnUpdate, this));
 }
 
-// 1ms，在update中发布话题调用回调函数并更新底盘状态
 void GazeboRosRbn100::OnUpdate()
 {
-  // 查看订阅队列消息，调用回调函数设置标志等
+  // 遍历处理回调队列消息
   ros::spinOnce();
 
-  common::Time time_now;
-  time_now.Set(ros::Time::now().sec, ros::Time::now().nsec);
-
-  updateJointState();
-  /* 
-    rate control
-   */
+  common::Time time_now = world_->SimTime();
+  
+  // bumper and cliff event
+  updateBumper();
+  updateCliffSensor();
+  
+  // rate control
   common::Time step_time = time_now - prev_update_time_;
-  imu_step_ += step_time;
   rate_step_ += step_time;
   sonar_step_ += step_time;
   camera_step_ += step_time;
-  
-  if(rate_step_.Double() >= update_period_){
-    updateOdometry(rate_step_);
-    propagateVelocityCommands();
-    updateWheelSpeed();
-    rate_step_ = common::Time(0);
-  }
-  // if(imu_step_.Double() >= imu_period_){
-  //   updateIMU();
-  //   imu_step_ = common::Time(0);
-  // }
+
+  // get sonar data
   if(sonar_step_.Double() >= sonar_period_){
     updateUltra();
     sonar_step_ = common::Time(0);
   }
 
+  // get camera data
   if(camera_step_.Double() >= camera_period_){
     updateStereoCamera();
     camera_step_ = common::Time(0);
   }
-
-  updateBumper();
-  updateCliffSensor();
+  
+  if(rate_step_.Double() >= update_period_){
+    // get encoder data
+    updateOdometry(rate_step_);
+    // get wheel speed
+    updateWheelSpeed();
+    // get joints states
+    updateJointState();
+    // send vel cmd
+    propagateVelocityCommands();
+    rate_step_ = common::Time(0);
+  }
 
   prev_update_time_ = time_now;
 }

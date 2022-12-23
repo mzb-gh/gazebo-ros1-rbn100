@@ -1,42 +1,36 @@
 #ifndef GAZEBO_ROS_RBN100_H
 #define GAZEBO_ROS_RBN100_H
 
-#include <cmath>
-#include <cstring>
 #include <string>
-#include <boost/bind.hpp>
-#include <boost/thread.hpp>
-#include <boost/shared_ptr.hpp>
-#include <gazebo/gazebo.hh>
-#include <gazebo/common/common.hh>
+
 #include <gazebo/common/Time.hh>
-#if GAZEBO_MAJOR_VERSION >= 9
-  // #include <ignition/math.hh>
-  #include <ignition/math/Vector3.hh>
-  #include <ignition/math/Quaternion.hh>
-#else
-  #include <gazebo/math/gzmath.hh>
-#endif
-#include <gazebo/physics/physics.hh>
-#include <gazebo/sensors/sensors.hh>
+#include <gazebo/common/Plugin.hh>
+// #include <gazebo/physics/physics.hh>
+#include <gazebo/physics/World.hh>
+#include <gazebo/physics/Model.hh>
+#include <gazebo/physics/Joint.hh>
+// #include <gazebo/sensors/sensors.hh>
+#include <gazebo/sensors/SensorManager.hh>
+#include <gazebo/sensors/RaySensor.hh>
+#include <gazebo/sensors/ContactSensor.hh>
+#include <gazebo/sensors/WideAngleCameraSensor.hh>
 #include <gazebo/rendering/Camera.hh>
-#include <gazebo/plugins/RayPlugin.hh>
+
 #include <gazebo_plugins/gazebo_ros_utils.h>
+
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Float64.h>
-#include <sensor_msgs/Imu.h>
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/Range.h>
 #include <sensor_msgs/fill_image.h>
-#include <sensor_msgs/distortion_models.h>
-#include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <image_transport/image_transport.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/LinearMath/Quaternion.h>
+// #include <tf/transform_broadcaster.h>
+// #include <tf/LinearMath/Quaternion.h>
+
 #include <rbn100_msgs/MotorPower.h>
 #include <rbn100_msgs/CliffEvent.h>
 #include <rbn100_msgs/BumperEvent.h>
@@ -47,85 +41,47 @@
 
 namespace gazebo
 {
-
-enum {LEFT= 0, RIGHT=1};
+enum {LEFT, RIGHT};
+#define WHEEL_JOINT_NUM 2
 #define ENCODER_N 5600
 #define PI 3.1415926
 #define SONAR_NUM 4
-#define ENABLE_PUBLIC_CAMERAS
+// #define ENABLE_PUBLIC_CAMERAS
 
 class GazeboRosRbn100 : public ModelPlugin
 {
 public:
-  /// Constructor
   GazeboRosRbn100();
-  /// Destructor
   ~GazeboRosRbn100();
+
   /// Called when plugin is loaded
   void Load(physics::ModelPtr parent, sdf::ElementPtr sdf);
-  /// Called by the world update start event
+  
   // Called at every iteration end
   void OnUpdate();
   void OnNewCameraFrameLeft();
   void OnNewCameraFrameRight();
 
 private:
-  /*
-   * Methods
-   */
-  /// Callback for incoming velocity commands
   void cmdVelCB(const geometry_msgs::TwistConstPtr &msg);
-  /// Callback for incoming velocity commands
   void motorPowerCB(const rbn100_msgs::MotorPowerPtr &msg);
-  /// Callback for resetting the odometry data
   void resetOdomCB(const std_msgs::EmptyConstPtr &msg);
-  /* bumper and cliff motor control */
-  // Callback for incoming forbidden bumper press to stop motor power
   void bumperAutoStopMotorCB(const std_msgs::BoolPtr &msg);
-  // Callback for incoming forbidden cliff event press to stop motor power
   void cliffAutoStopMotorCB(const std_msgs::BoolPtr &msg);
-  // Callback for incoming ultra data
-  void ultraCB(const rbn100_msgs::Ultra::ConstPtr& msg);
 
-  // void set_motor_enable(std::uint8_t _state);
-  ///motor power state publisher
-  void motorStatePub(std::uint8_t _state);
-  //  void OnContact(const std::string &name, const physics::Contact &contact); necessary?
-  /// Spin method for the spinner thread
-  // void spin();
-
-  /* 
-    internal functions for load,
-    read params from urdf
-   */
-  // init odom pose
   bool prepareOdom();
-  // init motor flag
-  // void prepareMotorPower();
-  // get publish TF info
   void preparePublishTf();
-  // get wheel info
   bool prepareWheelAndTorque();
-  // obtain the object of joints and set jointstate msg
   bool prepareJointState();
-  // obtain the object of imu sensor and active them
   bool prepareIMU();
-  // obtain the object of cliff sensor and active them
   bool prepareCliffSensor();
-  // obtain the object of bumper sensor and active it
   bool prepareBumper();
-  // obtain the object of sonar and active them
   bool prepareUltra();
-  // velocity timeout
   bool prepareVelocityCommand();
-  // obtain the object of cameras
   bool prepareStereoCamera();
-  //advertise or subscribe
-  void setupRosApi(std::string& model_name);
-  
-  /* 
-   internal functions for update
-   */
+  //set publisher and subscriber
+  void setupRosApi(const GazeboRosPtr& gazebo_ros);
+
   void updateJointState();
   void updateOdometry(common::Time& step_time);
   void updateIMU();
@@ -135,164 +91,50 @@ private:
   void updateUltra();
   void updateStereoCamera();
   void updateWheelSpeed();
-  // void pubSensorState();
 
   double GaussianKernel(double mu, double sigma);
 
-  /*
-   *  Parameters
-   */
-  /// ROS node handles (relative & private)
-  // ros::NodeHandle nh_, nh_priv_;
-  /// node name
-  std::string node_name_;
-
-  /// TF Prefix
-  std::string tf_prefix_;
-  /// extra thread for triggering ROS callbacks
-  //  boost::shared_ptr<boost::thread> ros_spinner_thread_; necessary?
-
-  /// flag for shutting down the spinner thread
-  bool shutdown_requested_;
-  /// pointer to the model
-  physics::ModelPtr model_;
-  /// pointer to simulated world
+/* 
+  information about model and world, 
+  can easily be used by prepare function in Load.
+*/
   physics::WorldPtr world_;
-  /// Pointers to Gazebo's joints
-  physics::JointPtr joints_[2];
-  // pointer to the gazebo ros node
-  // simplify parameter and rosnode handle
-  GazeboRosPtr gazebo_ros_;
-  sdf::ElementPtr sdf_;
-  // pointer to the update event connection 
-  // (triggers the OnUpdate callback when event update event is received)
-  event::ConnectionPtr update_connection_;
-  /// rate control
-  // double update_period_;
-  /// Simulation time on previous update
-  common::Time prev_update_time_;
-  /// ROS subscriber for motor power commands
-  ros::Subscriber motor_power_sub_;
-  /// Flag indicating if the motors are turned on or not
-  bool motors_enabled_;
-  /// Left wheel's joint name
-  std::string left_wheel_joint_name_;
-  /// Right wheel's joint name
-  std::string right_wheel_joint_name_;
-  /// ROS publisher for joint state messages
-  ros::Publisher joint_state_pub_;
-  /// ROS message for joint sates
-  sensor_msgs::JointState joint_state_;
-  /// ROS subscriber for velocity commands
-  ros::Subscriber cmd_vel_sub_;
-  /// Simulation time of the last velocity command (used for time out)
-  common::Time last_cmd_vel_time_;
-  /// Time out for velocity commands in seconds
-  double cmd_vel_timeout_;
-  /// Speeds of the wheels
-  double wheel_speed_cmd_[2];
-  /// Max. torque applied to the wheels
-  double torque_;
-  /// Separation between the wheels
-  double wheel_sep_;
-  /// Diameter of the wheels
-  double wheel_diam_;
-  /// Vector for pose
-  double odom_pose_[3];
-  /// Vector for velocity
-  double odom_vel_[3];
-  /// Pointer to pose covariance matrix
-  double *pose_cov_[36];
-  /// Pointer to twist covariance matrix
-  double *twist_cov_[36];
-  /// ROS publisher for odometry messages
-  ros::Publisher odom_pub_;
-  /// ROS message for odometry data
-  // nav_msgs::Odometry odom_;
-  /// Flag for (not) publish tf transform for odom -> robot
+  physics::ModelPtr model_;
+  sdf::ElementPtr sdf_; 
+  std::string node_name_;
+  
   bool publish_tf_;
-  /// TF transform publisher for the odom frame
-  tf::TransformBroadcaster tf_broadcaster_;
-  /// TF transform for the odom frame
-  geometry_msgs::TransformStamped odom_tf_;
-  /// Pointer to cliff sensor
-  sensors::RaySensorPtr cliff_sensor_FL_, cliff_sensor_FR_, cliff_sensor_BL_, cliff_sensor_BR_;
-  /// ROS publisher for cliff detection events
-  ros::Publisher cliff_event_pub_;
-  /// rbn100 ROS message for cliff event
-  rbn100_msgs::CliffEvent cliff_event_;
-  /// Cliff event flag
-  bool cliff_detected_FL_, cliff_detected_FR_, cliff_detected_BL_, cliff_detected_BR_;
-  /// measured distance in meter for detecting a cliff
-  float cliff_detection_threshold_;
+
+  physics::JointPtr wheel_joints_[2];
   
-  // stop motor flag
-  bool cliff_auto_stop_motor_flag;
-  bool bumper_auto_stop_motor_flag;
-  
-  /// Pointer to sonar sensor
-  sensors::RaySensorPtr sonar_sensor_FL_, sonar_sensor_front_, sonar_sensor_FR_, sonar_sensor_back_;
-  // ultra msg and pub
-  rbn100_msgs::Ultra ultra_msg_;
-  ros::Publisher ultra_pub_;
-  // ultra property
-  double sonar_noise_;
-  int samples_;
+  double torque_;
+  double wheel_sep_;
+  double wheel_diam_;
 
-  /// Maximum distance to floor
-  int floot_dist_;
-  /// Pointer to bumper sensor
-  sensors::ContactSensorPtr bumper_;
-  /// ROS publisher for bumper events
-  ros::Publisher bumper_event_pub_;
-  /// rbn100 ROS message for bumper event
-  rbn100_msgs::BumperEvent bumper_event_;
-  /// Flag for bumper's last state
-  bool bumper_was_pressed_;
-  /// Flag for bumper's current state
-  bool bumper_is_pressed_;
-  /// Pointer to IMU sensor model
-  sensors::ImuSensorPtr imu_;
-  /// Storage for the angular velocity reported by the IMU
-/*   #if GAZEBO_MAJOR_VERSION >= 9
-    ignition::math::Vector3d vel_angular_;
-  #else
-    math::Vector3 vel_angular_;
-  #endif */
-
-  /// ROS publisher for IMU data
-  ros::Publisher imu_pub_;
-  /// ROS message for publishing IMU data
-  sensor_msgs::Imu imu_msg_;
-  /// ROS subscriber for reseting the odometry data
-  ros::Subscriber odom_reset_sub_;
-
-  /// ROS publisher for rbn100 sensor state
-  ros::Publisher sensor_state_pub_;
-
-  // ROS subscriber of enable bumper and cliff stop motor
-  ros::Subscriber bumper_auto_stop_motor_sub_;
-  ros::Subscriber cliff_auto_stop_motor_sub_;
-  // ROS publisher for motor power state events
-  ros::Publisher motor_power_state_pub_;
-
-  int console_log_rate;
-  
-  std::string odom_name_, bumper_name_, imu_name_;
-
-  double update_rate_, imu_rate_, sonar_rate_, camera_rate_;
-  double update_period_, imu_period_, sonar_period_, camera_period_;
-
-  common::Time rate_step_, imu_step_, sonar_step_, camera_step_;
-
-  rbn100_msgs::Encoder odom_;
+  // accmulate in all sim
+  rbn100_msgs::Encoder odom_msg_;
   double m_per_encoder_;
+  std::string odom_topic_;
 
-  sensors::WideAngleCameraSensorPtr left_sensor_, right_sensor_;
+  double cmd_vel_timeout_;
+  common::Time last_cmd_vel_time_;
+  double wheel_speed_cmd_[2];
+
+  sensors::RaySensorPtr cliff_FL_sensor_, cliff_FR_sensor_, cliff_BL_sensor_, cliff_BR_sensor_;
+  float cliff_detection_threshold_;
+  bool cliff_detected_FL_, cliff_detected_FR_, cliff_detected_BL_, cliff_detected_BR_;
+  int floor_dist_;
+
+  sensors::ContactSensorPtr contact_bumper_;
+  bool bumper_was_pressed_, bumper_is_pressed_;
+
+  double sonar_period_;
+  sensors::RaySensorPtr sonar_FL_sensor_, sonar_front_sensor_, sonar_FR_sensor_, sonar_back_sensor_;
+  int samples_;
+  double range_max_, range_min_;
+
+  double camera_period_;
   rendering::CameraPtr leftCam_, rightCam_;
-  ros::Publisher stereo_image_pub_;
-  sensor_msgs::Image leftImg_msg_, rightImg_msg_;
-  std::string camera_left_name_, camera_right_name_;
   event::ConnectionPtr newLeftImgFrameConn_, newRightImgFrameConn_;
   #ifdef ENABLE_PUBLIC_CAMERAS
     image_transport::ImageTransport *itnode_;
@@ -301,7 +143,28 @@ private:
                 camera_left_frame_, camera_right_frame_;
   #endif
 
-  ros::Publisher wheel_speed_pub_;
+  ros::Publisher joint_state_pub_, odom_pub_, ultra_pub_, imu_pub_, 
+                 cliff_event_pub_, bumper_event_pub_, stereo_image_pub_, wheel_speed_pub_;
+  ros::Subscriber motor_power_sub_, cmd_vel_sub_, bumper_auto_stop_motor_sub_, 
+                  cliff_auto_stop_motor_sub_, odom_reset_sub_;
+  
+  bool motors_enabled_;
+  bool cliff_auto_stop_motor_flag, bumper_auto_stop_motor_flag;
+  
+  common::Time prev_update_time_;
+
+  event::ConnectionPtr update_connection_;
+
+  sensor_msgs::Image leftImg_msg_, rightImg_msg_;
+  rbn100_msgs::Ultra ultra_msg_;
+  double odom_pose_[3];
+  double odom_vel_[3];
+  double *pose_cov_[36];
+  double *twist_cov_[36];
+  // double update_rate_, imu_rate_, sonar_rate_;
+  double update_period_, imu_period_;
+  double sonar_noise_;
+  common::Time rate_step_, imu_step_, sonar_step_, camera_step_;
 
 };
 

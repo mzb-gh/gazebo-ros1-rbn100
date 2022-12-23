@@ -4,16 +4,9 @@
   <xacro:property name="v_camera" value="false" />
   <xacro:property name="v_sonar" value="false" />
   <xacro:property name="v_cliff" value="false" />
-  <!-- 
-    设置在gazebo中的摩擦力和插件等属性
-   -->
+
   <gazebo reference="base_link">
     <material>Gazebo/Gold</material>
-    <mu1>0</mu1>
-    <mu2>0</mu2>
-    <kp>1000000.0</kp>
-    <kd>100.0</kd>
-    <minDepth>0.001</minDepth>
   </gazebo>
 
   <!-- wheel go: torque > friction > 0, 
@@ -21,8 +14,8 @@
   <xacro:macro name="wheel_prop" params="pos" >
     <gazebo reference="${pos}_wheel">
       <material>Gazebo/Gray</material>
-      <mu1>1</mu1>
-      <mu2>1</mu2>
+      <mu1>0.2</mu1>
+      <mu2>0.2</mu2>
       <kp>1000000.0</kp>
       <kd>100.0</kd>
       <minDepth>0.001</minDepth>
@@ -100,7 +93,7 @@
     <material>Gazebo/FlatBlack</material>
     <sensor type="depth" name="kinect">
       <update_rate>11.0</update_rate>
-      <visualize>1</visualize>
+      <visualize>0</visualize>
       <camera>
         <horizontal_fov>1.047198</horizontal_fov> <!-- 60 degree -->
         <image>
@@ -129,18 +122,6 @@
           <pointCloudCutoffMax>5</pointCloudCutoffMax>
           <!-- 默认深度数据32fc1编码 -->
           <useDepth16UC1Format>false</useDepth16UC1Format>
-          <!-- 畸变系数 -->
-          <distortionK1>0.00000001</distortionK1>
-          <distortionK2>0.00000001</distortionK2>
-          <distortionK3>0.00000001</distortionK3>
-          <distortionT1>0.00000001</distortionT1>
-          <distortionT2>0.00000001</distortionT2>
-          <CxPrime>0</CxPrime>
-          <Cx>0</Cx>
-          <Cy>0</Cy>
-          <hackBaseline>0</hackBaseline>
-          <focalLength>0</focalLength>
-          <borderCrop>true</borderCrop>
       </plugin>
     </sensor>
   </gazebo>
@@ -159,7 +140,7 @@
       <material>Gazebo/FlatBlack</material>
       <sensor name="fisheye_left_sensor" type="wideanglecamera">
         <update_rate>25</update_rate>
-        <visualize>true</visualize>
+        <visualize>0</visualize>
         <camera>
           <pose>0.02 0.06 0 0 0 0</pose>
           <horizontal_fov>1.693</horizontal_fov>
@@ -188,7 +169,7 @@
       </sensor>
       <sensor name="fisheye_right_sensor" type="wideanglecamera">
         <update_rate>25</update_rate>
-        <visualize>true</visualize>
+        <visualize>0</visualize>
         <camera>
           <pose>0.02 -0.06 0 0 0 0</pose>
           <horizontal_fov>1.693</horizontal_fov>
@@ -263,14 +244,6 @@
           <cameraName>stereo_camera</cameraName>
           <frameName>stereo_camera_link</frameName>
           <hackBaseline>0.12</hackBaseline>
-          <distortionK1>-0</distortionK1>
-          <distortionK2>0</distortionK2>
-          <distortionK3>-0</distortionK3>
-          <distortionT1>0</distortionT1>
-          <distortionT2>0</distortionT2>
-          <CxPrime>0</CxPrime>
-          <Cx>0</Cx>
-          <Cy>0</Cy>
         </plugin>
       </sensor>
   </gazebo> -->
@@ -278,11 +251,11 @@
   <!-- 超声和cliff采样数和精度需要确认 -->
   <!-- sonar -->
   <xacro:macro name="sonar_plugin" params="pos">
-    <gazebo reference="sonar_${pos}">
+    <gazebo reference="sonar_${pos}_link">
       <material>Gazebo/FlatBlack</material>
-      <sensor type="ray" name="sonar_${pos}">
+      <sensor type="ray" name="sonar_${pos}_sensor">
         <pose>0 0 0 0 0 0</pose>
-        <visualize>${v_sonar}</visualize>
+        <visualize>0</visualize>
         <update_rate>10</update_rate>
         <ray>
           <scan>
@@ -322,12 +295,12 @@
 
   <!-- cliff -->
   <xacro:macro name="cliff_plugin" params="pos">
-    <gazebo reference="cliff_${pos}">
+    <gazebo reference="cliff_${pos}_link">
       <material>Gazebo/FlatBlack</material>
-      <sensor type="ray" name="cliff_${pos}">
-        <always_on>true</always_on>
+      <sensor type="ray" name="cliff_${pos}_sensor">
+        <pose>0 0 0 0 0 0</pose>
         <update_rate>50</update_rate>
-        <visualize>${v_cliff}</visualize>
+        <visualize>0</visualize>
         <ray>
           <scan>
             <horizontal>
@@ -370,7 +343,7 @@
   <gazebo reference="bumper">
     <material>Gazebo/FlatBlack</material>
     <selfCollide>false</selfCollide>
-    <sensor name="bumper" type="contact">
+    <sensor name="bumper_sensor" type="contact">
       <update_rate>50.0</update_rate>
       <contact>
         <!-- 
@@ -483,10 +456,6 @@
     </plugin>
   </gazebo> -->
 
-  <!-- <imageTopicName>image_raw</imageTopicName>
-  <cameraName>fisheye_cameras</cameraName>
-  <frameName>fisheye_cameras</frameName> -->
-
   <!-- gazebo plugin(model), customize -->
   <gazebo>
     <plugin name="rbn100_controller" filename="libgazebo_ros_rbn100.so">
@@ -497,30 +466,28 @@
       <wheel_separation>0.322</wheel_separation>
       <wheel_diameter>0.169</wheel_diameter>
       <torque>5</torque>
+      <odom_topic>odom</odom_topic>
       <!-- 按秒计算 -->
       <velocity_command_timeout>1</velocity_command_timeout> 
-      <!-- same to link name, for msg frame_id to construct tf tree -->
-      <cliff_sensor_FL_name>cliff_FL</cliff_sensor_FL_name>
-      <cliff_sensor_FR_name>cliff_FR</cliff_sensor_FR_name>
-      <cliff_sensor_BL_name>cliff_BL</cliff_sensor_BL_name>
-      <cliff_sensor_BR_name>cliff_BR</cliff_sensor_BR_name>
+      <!-- gazebo sensor name, to find sensor object-->
+      <cliff_FL_sensor_name>cliff_FL_sensor</cliff_FL_sensor_name>
+      <cliff_FR_sensor_name>cliff_FR_sensor</cliff_FR_sensor_name>
+      <cliff_BL_sensor_name>cliff_BL_sensor</cliff_BL_sensor_name>
+      <cliff_BR_sensor_name>cliff_BR_sensor</cliff_BR_sensor_name>
       <cliff_detection_threshold>0.12</cliff_detection_threshold>
-      <sonar_FL_name>sonar_FL</sonar_FL_name>
-      <sonar_front_name>sonar_front</sonar_front_name>
-      <sonar_FR_name>sonar_FR</sonar_FR_name>
-      <sonar_back_name>sonar_back</sonar_back_name>
+      <sonar_FL_sensor_name>sonar_FL_sensor</sonar_FL_sensor_name>
+      <sonar_front_sensor_name>sonar_front_sensor</sonar_front_sensor_name>
+      <sonar_FR_sensor_name>sonar_FR_sensor</sonar_FR_sensor_name>
+      <sonar_back_sensor_name>sonar_back_sensor</sonar_back_sensor_name>
       <sonar_noise>0.005</sonar_noise>
-      <odom_name>odom</odom_name>
-      <bumper_name>bumper</bumper_name>
+      <sonar_rate>10</sonar_rate>
+      <bumper_sensor_name>bumper_sensor</bumper_sensor_name>
       <!-- <imu_name>imu</imu_name> -->
       <!-- sim rate has to be 1000Hz for good imu data -->
       <!-- <imu_rate>500</imu_rate> -->
       <update_rate>50</update_rate>
-      <sonar_rate>10</sonar_rate>
-      <!-- stereo fisheye camera -->
-      <!-- name for gazebo to find sensor object -->
-      <camera_left_name>fisheye_left_sensor</camera_left_name>
-      <camera_right_name>fisheye_right_sensor</camera_right_name>
+      <camera_left_sensor_name>fisheye_left_sensor</camera_left_sensor_name>
+      <camera_right_sensor_name>fisheye_right_sensor</camera_right_sensor_name>
       <!-- frame for tf tree -->
       <camera_left_frame>fisheye_left_optical_frame</camera_left_frame>
       <camera_right_frame>fisheye_right_optical_frame</camera_right_frame>

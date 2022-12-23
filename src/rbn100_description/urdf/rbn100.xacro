@@ -2,15 +2,9 @@
 <robot name="rbn100_chassis" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="materials.xacro"/>
   <xacro:include filename="rbn100.gazebo"/>
-  <!-- 
-    urdf：ros中机器描述格式，在rviz中显示，gazebo会转换为sdf再显示；
-    一般保持sw的参数不变，增加质量小车可能会转不动;
-    改变碰撞属性（如主轮的）为简单形状以防止摩擦不均导致小车不走直线
-   -->
 
-  <!-- base_footprint -->
   <link name="base_footprint"/>
-  <!-- base link -->
+
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -75,9 +69,7 @@
       <axis xyz="0 1 0" />
     </joint>
   </xacro:macro>
-  <!-- left wheel -->
   <xacro:wheel pos="left" flag_y="1"/>
-  <!-- right wheel -->
   <xacro:wheel pos="right" flag_y="-1"/>
 
   <!-- 两个结构的转动惯量相对位置不均匀，导致vertical自己缓慢转动，没有转动惯量部件不会转动 -->
@@ -292,14 +284,13 @@
 
   <!-- camera -->
   <xacro:macro name="camera" params="name pos">
-    <!-- body -->
     <joint name="fisheye_${name}_joint" type="fixed">
       <origin xyz="0 ${pos * 0.035} 0" rpy="0 0 0" />
       <parent link="stereo_camera_link" />
       <child link="fisheye_${name}_frame" />
     </joint>
     <link name="fisheye_${name}_frame" />
-    <!-- optical -->
+    
     <joint name="fisheye_${name}_optical_joint" type="fixed">
       <origin xyz="0.02 0 0" rpy="0 0 0" />
       <parent link="fisheye_${name}_frame" />
@@ -309,7 +300,7 @@
   </xacro:macro>
   <xacro:camera name="left" pos="1" />
   <xacro:camera name="right" pos="-1" />
-
+  
   <!-- imu -->
   <joint name="imu_joint" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
@@ -339,58 +330,64 @@
 
   <!-- 
     sonar
-   -->
-   <xacro:macro name="sonar" params="pos">
-    <link name="sonar_${pos}">
-      <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <geometry>
-          <box size="0.0015 0.05 0.02"/>
-        </geometry>
-        <material name="">
-          <color rgba="0 0 0 1" />
-        </material>
-      </visual>
-    </link>
-   </xacro:macro>
-   <!-- back -->
-  <xacro:sonar pos="back"/>
+  -->
+  <xacro:macro name="sonar" params="pos">
+  <link name="sonar_${pos}_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0015 0.05 0.02"/>
+      </geometry>
+      <material name="">
+        <color rgba="0 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  </xacro:macro>
+
   <joint name="back_sonar_joint" type="fixed">
     <origin xyz="-0.233 0 0.063" rpy="0 0 3.14" />
     <parent link="base_link" />
-    <child link="sonar_back" />
+    <child link="sonar_back_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <!-- front -->
-  <xacro:sonar pos="front"/>
+  <xacro:sonar pos="back"/>
+
   <joint name="front_sonar_joint" type="fixed">
     <origin xyz="0.2316 0 0.063" rpy="0 0 0" />
     <parent link="base_link" />
-    <child link="sonar_front" />
+    <child link="sonar_front_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <!-- FL -->
-  <xacro:sonar pos="FL"/>
+  <xacro:sonar pos="front"/>
+  
   <joint name="sonar_FL_joint" type="fixed">
     <origin xyz="0.21648 0.17249 0.063" rpy="0 0 0.628" />
     <parent link="base_link" />
-    <child link="sonar_FL" />
+    <child link="sonar_FL_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <!-- FR -->
-  <xacro:sonar pos="FR"/>
+  <xacro:sonar pos="FL"/>
+  
   <joint name="sonar_FR_joint" type="fixed">
     <origin xyz="0.21748 -0.17249 0.063" rpy="0 0 -0.628" />
     <parent link="base_link" />
-    <child link="sonar_FR" />
+    <child link="sonar_FR_link" />
     <axis xyz="0 0 0" />
   </joint>
+  <xacro:sonar pos="FR"/>
 
   <!-- 
     cliff
    -->
   <xacro:macro name="cliff" params="pos flag_x flag_y" >
-    <link name="cliff_${pos}">
+    <joint name="cliff_${pos}_joint" type="fixed">
+      <origin xyz="${0.106 * flag_x} ${0.1865 * flag_y} -0.0609" rpy="0 1.570796 0" />
+      <parent link="base_link" />
+      <child link="cliff_${pos}_link" />
+      <axis xyz="0 0 0" />
+    </joint>
+    <link name="cliff_${pos}_link">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
@@ -401,23 +398,19 @@
         </material>
       </visual>
     </link>
-    <joint name="cliff_${pos}_joint" type="fixed">
-      <origin xyz="${0.106 * flag_x} ${0.1865 * flag_y} -0.0609" rpy="0 1.570796 0" />
-      <parent link="base_link" />
-      <child link="cliff_${pos}" />
-      <axis xyz="0 0 0" />
-    </joint>
   </xacro:macro>
-  <!-- FL -->
   <xacro:cliff pos="FL" flag_x="1" flag_y="1"/>
-  <!-- FR -->
   <xacro:cliff pos="FR" flag_x="1" flag_y="-1"/>
-  <!-- BL -->
   <xacro:cliff pos="BL" flag_x="-1" flag_y="1"/>
-  <!-- BR -->
   <xacro:cliff pos="BR" flag_x="-1" flag_y="-1"/>
 
   <!-- bumper -->
+  <joint name="bumper_joint" type="fixed">
+    <origin xyz="0.1115 0.001 -0.077" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="bumper" />
+    <axis xyz="0 0 0" />
+  </joint>
   <link name="bumper">
     <inertial>
       <origin xyz="0.094808 2.5935E-08 3.9562E-09" rpy="0 0 0" />
@@ -442,12 +435,6 @@
       </geometry>
     </collision>
   </link>
-  <joint name="bumper_joint" type="fixed">
-    <origin xyz="0.1115 0.001 -0.077" rpy="0 0 0" />
-    <parent link="base_link" />
-    <child link="bumper" />
-    <axis xyz="0 0 0" />
-  </joint>
 
   <!-- transmission, parsed by ros_control -->
   <!-- <transmission name="left_wheel_joint_trans">
