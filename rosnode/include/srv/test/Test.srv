@@ -1,8 +1,0 @@
-service Test {
-    request {
-        time: uint32
-    }
-    response {
-        success: bool
-    }
-}

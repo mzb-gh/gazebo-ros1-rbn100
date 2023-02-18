@@ -1,7 +1,0 @@
-qos:
-    kernel: v1
-
-plugins:
-    - {name: ros, lib: libros_plugin.so}
-    # - {name: pub, lib: libros_publisher_plugin.so}
-    - {name: sub, lib: libros_subscriber_plugin.so}
