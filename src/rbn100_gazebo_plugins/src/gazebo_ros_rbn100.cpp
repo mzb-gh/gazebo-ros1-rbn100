@@ -1,11 +1,4 @@
 #include "rbn100_gazebo_plugins/gazebo_ros_rbn100.h"
-#include <tf/LinearMath/Quaternion.h>
-#if GAZEBO_MAJOR_VERSION >= 9
-  #include <ignition/math/Vector3.hh>
-  #include <ignition/math/Quaternion.hh>
-#else
-  #include <gazebo/math/gzmath.hh>
-#endif
 
 namespace gazebo
 {
@@ -13,7 +6,7 @@ namespace gazebo
 // constructor
 GazeboRosRbn100::GazeboRosRbn100(){
   motors_enabled_ = true;
-  rate_step_ = imu_step_ = sonar_step_ = camera_step_ = common::Time(0);
+  rate_step_ = sonar_step_ = camera_step_ = common::Time(0);
 }
 
 // deconstructor
@@ -22,7 +15,8 @@ GazeboRosRbn100::~GazeboRosRbn100(){}
 void GazeboRosRbn100::Load(physics::ModelPtr model, sdf::ElementPtr sdf)
 {
   sdf_ = sdf;
-  std::string model_name = sdf_->GetParent()->Get<std::string>("name"); // why rbn100???
+  // name in spawn model
+  std::string model_name = sdf_->GetParent()->Get<std::string>("name"); 
   node_name_ = model_name;
 
   model_ = model;
@@ -30,7 +24,7 @@ void GazeboRosRbn100::Load(physics::ModelPtr model, sdf::ElementPtr sdf)
     ROS_ERROR_STREAM("Load: Invalid model pointer! [" << node_name_ << "]");
     return;
   }
-
+  // model obj can get world obj, sensor obj can't.
   world_ = model_->GetWorld();
 
   // Gazebo ros helper class, simplifies the parameter and rosnode handling
@@ -85,7 +79,7 @@ void GazeboRosRbn100::Load(physics::ModelPtr model, sdf::ElementPtr sdf)
 
 void GazeboRosRbn100::OnUpdate()
 {
-  // 遍历处理回调队列消息
+  // 每次迭代，调用节点上的回调函数
   ros::spinOnce();
 
   common::Time time_now = world_->SimTime();

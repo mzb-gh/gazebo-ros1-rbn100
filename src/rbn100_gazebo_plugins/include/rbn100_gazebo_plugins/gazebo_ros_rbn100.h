@@ -28,8 +28,6 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <image_transport/image_transport.h>
-// #include <tf/transform_broadcaster.h>
-// #include <tf/LinearMath/Quaternion.h>
 
 #include <rbn100_msgs/MotorPower.h>
 #include <rbn100_msgs/CliffEvent.h>
@@ -124,18 +122,22 @@ private:
   float cliff_detection_threshold_;
   bool cliff_detected_FL_, cliff_detected_FR_, cliff_detected_BL_, cliff_detected_BR_;
   int floor_dist_;
+  bool cliff_auto_stop_motor_flag;
 
   sensors::ContactSensorPtr contact_bumper_;
   bool bumper_was_pressed_, bumper_is_pressed_;
+  bool bumper_auto_stop_motor_flag;
 
   double sonar_period_;
   sensors::RaySensorPtr sonar_FL_sensor_, sonar_front_sensor_, sonar_FR_sensor_, sonar_back_sensor_;
   int samples_;
   double range_max_, range_min_;
+  double sonar_noise_;
 
   double camera_period_;
   rendering::CameraPtr leftCam_, rightCam_;
   event::ConnectionPtr newLeftImgFrameConn_, newRightImgFrameConn_;
+  sensor_msgs::Image leftImg_msg_, rightImg_msg_;
   #ifdef ENABLE_PUBLIC_CAMERAS
     image_transport::ImageTransport *itnode_;
     image_transport::CameraPublisher leftImg_pub_, rightImg_pub_;
@@ -145,27 +147,18 @@ private:
 
   ros::Publisher joint_state_pub_, odom_pub_, ultra_pub_, imu_pub_, 
                  cliff_event_pub_, bumper_event_pub_, stereo_image_pub_, wheel_speed_pub_;
+  // 订阅者对象需一直存在
   ros::Subscriber motor_power_sub_, cmd_vel_sub_, bumper_auto_stop_motor_sub_, 
-                  cliff_auto_stop_motor_sub_, odom_reset_sub_;
+                cliff_auto_stop_motor_sub_, odom_reset_sub_;
   
   bool motors_enabled_;
-  bool cliff_auto_stop_motor_flag, bumper_auto_stop_motor_flag;
   
   common::Time prev_update_time_;
 
   event::ConnectionPtr update_connection_;
 
-  sensor_msgs::Image leftImg_msg_, rightImg_msg_;
-  rbn100_msgs::Ultra ultra_msg_;
-  double odom_pose_[3];
-  double odom_vel_[3];
-  double *pose_cov_[36];
-  double *twist_cov_[36];
-  // double update_rate_, imu_rate_, sonar_rate_;
-  double update_period_, imu_period_;
-  double sonar_noise_;
-  common::Time rate_step_, imu_step_, sonar_step_, camera_step_;
-
+  double update_period_;
+  common::Time rate_step_, sonar_step_, camera_step_;
 };
 
 } // namespace gazebo

@@ -101,12 +101,12 @@ void GazeboRosRbn100::propagateVelocityCommands()
   {
     wheel_speed_cmd_[LEFT] = 0.0;
     wheel_speed_cmd_[RIGHT] = 0.0;
-    ROS_INFO_STREAM_THROTTLE(1, "[update] vel cmd time out, vel set to 0");
+    ROS_INFO_STREAM_THROTTLE(5, "[update] vel cmd time out, vel set to 0");
   }
   if(!motors_enabled_){
     wheel_speed_cmd_[LEFT] = 0.0;
     wheel_speed_cmd_[RIGHT] = 0.0;
-    ROS_INFO_STREAM_THROTTLE(1, "[update] motors down, vel set to 0");
+    ROS_INFO_STREAM_THROTTLE(5, "[update] motors down, vel set to 0");
   }
   wheel_joints_[LEFT]->SetVelocity(0, wheel_speed_cmd_[LEFT] / (wheel_diam_ / 2.0));
   wheel_joints_[RIGHT]->SetVelocity(0, wheel_speed_cmd_[RIGHT] / (wheel_diam_ / 2.0));
@@ -170,6 +170,7 @@ void GazeboRosRbn100::updateCliffSensor()
     cliff_event.state = rbn100_msgs::CliffEvent::CLIFF;
     // convert distance back to an AD reading
     cliff_event.bottom = (int)(76123.0f * atan2(0.995f, cliff_FL_sensor_->Range(0)));
+    ROS_INFO_STREAM("[cliff] bottom and range[0]: " << cliff_event.bottom << " " << cliff_FL_sensor_->Range(0));
     cliff_event_pub_.publish(cliff_event);
   }
   else if ((cliff_detected_FL_ == true) && 
@@ -260,7 +261,8 @@ void GazeboRosRbn100::updateCliffSensor()
 }
 
 void GazeboRosRbn100::updateUltra(){
-  ultra_msg_.header.stamp = ros::Time::now();
+  rbn100_msgs::Ultra ultra_msg;
+  ultra_msg.header.stamp = ros::Time::now();
   // every iteration, init distance to max
   double range_FL, range_front, range_FR, range_back;
   range_FL = range_front = range_FR = range_back = range_max_;
@@ -310,12 +312,12 @@ void GazeboRosRbn100::updateUltra(){
     range_back = range_min_;
   }
 
-  ultra_msg_.distance[0] = range_FL;
-  ultra_msg_.distance[1] = range_front;
-  ultra_msg_.distance[2] = range_FR;
-  ultra_msg_.distance[3] = range_back;
+  ultra_msg.distance[0] = range_FL;
+  ultra_msg.distance[1] = range_front;
+  ultra_msg.distance[2] = range_FR;
+  ultra_msg.distance[3] = range_back;
 
-  ultra_pub_.publish(ultra_msg_);
+  ultra_pub_.publish(ultra_msg);
 }
 
 void GazeboRosRbn100::updateBumper()
@@ -324,7 +326,6 @@ void GazeboRosRbn100::updateBumper()
   bumper_is_pressed_ = false;
   // 判断当前状态
   msgs::Contacts contacts = contact_bumper_->Contacts();
-  ROS_INFO_STREAM_THROTTLE(1, "[bumper] contact size: " << contacts.contact_size());
   if(contacts.contact_size() >= 1){
     bumper_is_pressed_ = true;
   }
@@ -413,7 +414,7 @@ void GazeboRosRbn100::OnNewCameraFrameRight(){
                          rightCam_->ImageHeight(),
                          rightCam_->ImageWidth(),
                          rightCam_->ImageDepth() * rightCam_->ImageWidth(),
-                         reinterpret_cast<const void *>(rightCam_->ImageData()));
+                         rightCam_->ImageData());
   #ifdef ENABLE_PUBLIC_CAMERAS
     rightImg_msg_.header.frame_id = camera_right_frame_;
     auto camera_info_msg = cameraInfoRight(rightImg_msg_, rightCam_->HFOV().Radian());
@@ -428,10 +429,8 @@ void GazeboRosRbn100::updateStereoCamera(){
     cam_msg.header.stamp = ros::Time::now();
     cam_msg.width = leftImg_msg_.width;
     cam_msg.height = leftImg_msg_.height;
-    cam_msg.encoding = leftImg_msg_.encoding;
-    cam_msg.bigendian = leftImg_msg_.is_bigendian;
-    cam_msg.step = leftImg_msg_.step;
     int size = leftImg_msg_.step * leftImg_msg_.height;
+    
     cam_msg.left.resize(size);
     cam_msg.right.resize(size);
     memcpy(&cam_msg.left[0], &leftImg_msg_.data[0], size);

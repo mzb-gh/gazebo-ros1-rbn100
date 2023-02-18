@@ -194,7 +194,6 @@ bool GazeboRosRbn100::prepareBumper(){
     ROS_ERROR_STREAM("Couldn't find the bumpers in the model! [" << node_name_ <<"]");
     return false;
   }
-  ROS_INFO_STREAM("[load] bumper sensor name: " << contact_bumper_->Name());
   contact_bumper_->SetActive(true);
   bumper_was_pressed_ = false;
   bumper_auto_stop_motor_flag = false;
@@ -378,6 +377,7 @@ bool GazeboRosRbn100::prepareStereoCamera(){
   leftCam_ = left_camera->Camera();
   rightCam_ = right_camera->Camera();
 
+  // 相机需要渲染，不一定每次迭代都有数据（前两毫秒没有数据），按事件处理稳妥
   newLeftImgFrameConn_ = leftCam_->ConnectNewImageFrame(std::bind(
       &GazeboRosRbn100::OnNewCameraFrameLeft, this));
   newRightImgFrameConn_ = rightCam_->ConnectNewImageFrame(std::bind(
@@ -439,6 +439,7 @@ void GazeboRosRbn100::setupRosApi(const GazeboRosPtr& gazebo_ros){
               回调函数尽量简短，以保证信息处理及时，spin和spinonce都是单线程顺序查看
               队列中的所有信息，多线程可以分topic查看）
 */
+
   // sub of motor power
   std::string motor_power_topic = "/commands/motor_power";
   motor_power_sub_ = gazebo_ros->node()->subscribe(motor_power_topic, 10, &GazeboRosRbn100::motorPowerCB, this);

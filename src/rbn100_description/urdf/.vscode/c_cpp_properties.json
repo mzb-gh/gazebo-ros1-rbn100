@@ -1,0 +1,27 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/mzb/work/sim/rbn100/rbn100_sim_ws/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/mzb/work/sim/rbn100/rbn100_sim_ws/src/gazebo_ros_pkgs/gazebo_plugins/include/**",
+        "/home/mzb/work/sim/rbn100/rbn100_sim_ws/src/gazebo_ros_pkgs/gazebo_ros/include/**",
+        "/home/mzb/work/sim/rbn100/rbn100_sim_ws/src/gazebo_ros_pkgs/gazebo_ros_control/include/**",
+        "/home/mzb/work/sim/rbn100/rbn100_sim_ws/src/rbn100_gazebo_plugins/include/**",
+        "/home/mzb/work/sim/rbn100/rbn100_sim_ws/src/rbn100_keyop/include/**",
+        "/home/mzb/work/sim/rbn100/rbn100_sim_ws/src/realsense_ros_gazebo/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

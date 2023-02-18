@@ -58,9 +58,14 @@
   <gazebo reference="lidar">
     <material>Gazebo/FlatBlack</material>
     <sensor type="ray" name="lidar_sensor">
-      <pose>0 0 0 0 0 0</pose>
-      <visualize>0</visualize>
+    <!-- 传感器通用参数 -->
+      <!-- true:一直更新; false:发布旧数据直到有订阅者 -->
+      <always_on>false</always_on>
+      <!-- 自行更新频率 -->
       <update_rate>15</update_rate>
+      <visualize>0</visualize>
+      <pose>0 0 0 0 0 0</pose>
+    <!-- end: 传感器通用参数 -->
       <ray>
         <scan>
           <horizontal>
@@ -87,6 +92,7 @@
       </plugin>
     </sensor>
   </gazebo>
+  <!-- why namespace is / ???-->
 
   <!-- tof -->
   <gazebo reference="tof_link">
@@ -129,13 +135,6 @@
   <!-- stereo fisheye camera -->
   <!-- for circular image, twice as low as hfov -->
   <!-- <cutoff_angle>0.846</cutoff_angle> -->
-  <!-- <type>custom</type>
-  <custom_function>
-      <c1>1</c1>
-      <c2>0.8</c2>
-      <f>1</f>
-      <fun>sin</fun>
-  </custom_function> -->
   <gazebo reference="stereo_camera_link">
       <material>Gazebo/FlatBlack</material>
       <sensor name="fisheye_left_sensor" type="wideanglecamera">
@@ -153,8 +152,12 @@
             <near>0.1</near>
             <far>30</far>
           </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
           <lens>
-            <!-- <type>equidistant</type> -->
             <type>custom</type>
             <custom_function>
                 <c1>1</c1>
@@ -165,6 +168,10 @@
             <scale_to_hfov>true</scale_to_hfov>
             <env_texture_size>1536</env_texture_size>
           </lens>
+          <save enabled="false">
+            <path>/tmp/camera_save_tutorial</path>
+          </save>
+          <update_rate>25</update_rate>
         </camera>
       </sensor>
       <sensor name="fisheye_right_sensor" type="wideanglecamera">
@@ -182,6 +189,11 @@
             <near>0.1</near>
             <far>30</far>
           </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
           <lens>
             <type>custom</type>
             <custom_function>
@@ -193,6 +205,10 @@
             <scale_to_hfov>true</scale_to_hfov>
             <env_texture_size>1536</env_texture_size>
           </lens>
+          <save enabled="false">
+            <path>/tmp/camera_save_tutorial</path>
+          </save>
+          <update_rate>25</update_rate>
         </camera>
       </sensor>
   </gazebo>
@@ -202,7 +218,7 @@
       <sensor name="camera" type="multicamera">
         <update_rate>25</update_rate>
         <visualize>true</visualize>
-        <camera  name="left_camera">
+        <camera name="left_camera">
           <pose>0 0.06 0 0 0 0</pose>
           <horizontal_fov>1.692</horizontal_fov>
           <image>
@@ -219,8 +235,16 @@
               <mean>0.0</mean>
               <stddev>0.007</stddev>
           </noise>
+          <distortion>
+            <k1>-0.25</k1>
+            <k2>0.12</k2>
+            <k3>0.0</k3>
+            <p1>-0.00028</p1>
+            <p2>-0.00005</p2>
+            <center>0.5 0.5</center>
+          </distortion>
         </camera>
-        <camera  name="right_camera">
+        <camera name="right_camera">
           <pose>0 -0.06 0 0 0 0</pose>
           <horizontal_fov>1.692</horizontal_fov>
           <image>
@@ -237,6 +261,14 @@
               <mean>0.0</mean>
               <stddev>0.007</stddev>
           </noise>
+          <distortion>
+            <k1>-0.25</k1>
+            <k2>0.12</k2>
+            <k3>0.0</k3>
+            <p1>-0.00028</p1>
+            <p2>-0.00005</p2>
+            <center>0.5 0.5</center>
+          </distortion>
         </camera>
         <plugin name="camera_controller" filename="libgazebo_ros_multicamera.so">
           <imageTopicName>image_raw</imageTopicName>
@@ -244,6 +276,11 @@
           <cameraName>stereo_camera</cameraName>
           <frameName>stereo_camera_link</frameName>
           <hackBaseline>0.12</hackBaseline>
+          <distortionK1>0.0</distortionK1>
+          <distortionK2>0.0</distortionK2>
+          <distortionK3>0.0</distortionK3>
+          <distortionT1>0.0</distortionT1>
+          <distortionT2>0.0</distortionT2>
         </plugin>
       </sensor>
   </gazebo> -->
@@ -348,9 +385,10 @@
       <contact>
         <!-- 
           bumper是urdf中collision标签的名字，其他固定。
-          可以通过gz sdf -p model.urdf > model.sdf查
+          可以通过gz sdf -p model.urdf > model.sdf查，
+          也可以在gazebo里面查看gazebo发布的topic。
          -->
-        <collision>base_footprint_fixed_joint_lump__bumper_collision_2</collision>
+        <collision>base_footprint_fixed_joint_lump__bumper_collision_1</collision>
       </contact>
       <!-- <plugin filename="libgazebo_ros_bumper.so" name="bumper_controller">
         <alwaysOn>true</alwaysOn>

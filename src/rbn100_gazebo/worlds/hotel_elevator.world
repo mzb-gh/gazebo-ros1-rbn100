@@ -62,6 +62,35 @@
     </model>
     <model name='elevator'>
       <pose frame=''>0 10 0.075 0 -0 0</pose>
+
+      <joint name='lift' type='prismatic'>
+        <parent>world</parent>
+        <child>link</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>10</upper>
+            <effort>100000</effort>
+          </limit>
+          <dynamics>
+            <damping>50</damping>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>0</use_parent_model_frame>
+        </axis>
+        <physics>
+          <ode>
+            <implicit_spring_damper>1</implicit_spring_damper>
+            <limit>
+              <cfm>0</cfm>
+              <erp>0.2</erp>
+            </limit>
+          </ode>
+        </physics>
+      </joint>
+
       <link name='link'>
         <inertial>
           <mass>800</mass>
@@ -75,6 +104,7 @@
             <izz>1</izz>
           </inertia>
         </inertial>
+
         <collision name='floor_collision'>
           <geometry>
             <box>
@@ -102,6 +132,7 @@
             </box>
           </geometry>
         </visual>
+
         <collision name='wall1_collision'>
           <pose frame=''>1.0745 0.5725 1.125 0 -0 0</pose>
           <geometry>
@@ -137,6 +168,7 @@
             </script>
           </material>
         </visual>
+
         <collision name='wall2_collision'>
           <pose frame=''>1.0745 -1.0625 1.125 0 -0 0</pose>
           <geometry>
@@ -172,12 +204,45 @@
             </script>
           </material>
         </visual>
+
         <self_collide>0</self_collide>
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
       </link>
+
+      <joint name='door' type='prismatic'>
+        <parent>link</parent>
+        <child>door</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>1</upper>
+            <effort>10</effort>
+          </limit>
+          <dynamics>
+            <damping>2</damping>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>0</use_parent_model_frame>
+        </axis>
+      </joint>
+
       <link name='door'>
         <pose frame=''>1.0745 -0.5 1.125 0 -0 0</pose>
+        <inertial>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+          <mass>1</mass>
+        </inertial>
         <collision name='collision'>
           <geometry>
             <box>
@@ -206,66 +271,10 @@
           </geometry>
         </visual>
         <self_collide>0</self_collide>
-        <inertial>
-          <pose frame=''>0 0 0 0 -0 0</pose>
-          <inertia>
-            <ixx>1</ixx>
-            <ixy>0</ixy>
-            <ixz>0</ixz>
-            <iyy>1</iyy>
-            <iyz>0</iyz>
-            <izz>1</izz>
-          </inertia>
-          <mass>1</mass>
-        </inertial>
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
       </link>
-      <joint name='door' type='prismatic'>
-        <parent>link</parent>
-        <child>door</child>
-        <axis>
-          <xyz>0 1 0</xyz>
-          <limit>
-            <lower>0</lower>
-            <upper>1</upper>
-            <effort>10</effort>
-          </limit>
-          <dynamics>
-            <damping>2</damping>
-            <spring_reference>0</spring_reference>
-            <spring_stiffness>0</spring_stiffness>
-          </dynamics>
-          <use_parent_model_frame>0</use_parent_model_frame>
-        </axis>
-      </joint>
-      <joint name='lift' type='prismatic'>
-        <parent>world</parent>
-        <child>link</child>
-        <axis>
-          <xyz>0 0 1</xyz>
-          <limit>
-            <lower>0</lower>
-            <upper>10</upper>
-            <effort>100000</effort>
-          </limit>
-          <dynamics>
-            <damping>50</damping>
-            <spring_reference>0</spring_reference>
-            <spring_stiffness>0</spring_stiffness>
-          </dynamics>
-          <use_parent_model_frame>0</use_parent_model_frame>
-        </axis>
-        <physics>
-          <ode>
-            <implicit_spring_damper>1</implicit_spring_damper>
-            <limit>
-              <cfm>0</cfm>
-              <erp>0.2</erp>
-            </limit>
-          </ode>
-        </physics>
-      </joint>
+
       <plugin name='elevator1_plugin' filename='libgazebo_ros_elevator.so'>
         <lift_joint>elevator::lift</lift_joint>
         <door_joint>elevator::door</door_joint>
@@ -306,6 +315,7 @@
             </box>
           </geometry>
         </visual>
+
         <collision name='shaft_wall2_collision'>
           <pose frame=''>0 -1.25 3 0 -0 0</pose>
           <geometry>
@@ -335,6 +345,7 @@
             </box>
           </geometry>
         </visual>
+
         <collision name='shaft_wall3_collision'>
           <pose frame=''>-1.25 0 3 0 -0 0</pose>
           <geometry>
@@ -364,6 +375,7 @@
             </box>
           </geometry>
         </visual>
+
         <collision name='floor0_collision'>
           <pose frame=''>1.19 0 0.075 0 -0 0</pose>
           <geometry>
@@ -393,6 +405,7 @@
             </box>
           </geometry>
         </visual>
+
         <collision name='floor1_collision'>
           <pose frame=''>1.19 0 3.075 0 -0 0</pose>
           <geometry>
@@ -422,6 +435,7 @@
             </box>
           </geometry>
         </visual>
+        
         <self_collide>0</self_collide>
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
@@ -9182,6 +9196,13 @@
           </ode>
         </physics>
       </joint>
+      <plugin name='elevator2_plugin' filename='libgazebo_ros_elevator.so'>
+        <lift_joint>elevator2::lift</lift_joint>
+        <door_joint>elevator2::door</door_joint>
+        <floor_height>3.085</floor_height>
+        <door_wait_time>10</door_wait_time>
+        <topic>gazebo/elevator2</topic>
+      </plugin>
     </model>
     <model name='two_walls'>
       <link name='Wall_0'>
